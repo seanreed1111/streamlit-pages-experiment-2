@@ -5,8 +5,7 @@ import json
 import streamlit as st
 import pandas as pd
 
-from langchain_community.utilities.sql_database import SQLDatabase 
-# from io import StringIO
+from langchain_community.utilities.sql_database import SQLDatabase
 import urllib
 from langchain.schema import ChatMessage
 from loguru import logger
