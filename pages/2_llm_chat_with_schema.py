@@ -32,7 +32,7 @@ def set_system_message(schema):
         highest possible. Respond with the query and the accuracy score. If you give
         an accuracy score of 1 or 2, briefly state your reason.
         """
-    st.session_state["messages"].append(ChatMessage(role="system", content=system_message))   
+    st.session_state["chat_with_schema_messages"].append(ChatMessage(role="system", content=system_message))   
 
 with st.sidebar:
     uploaded_file = st.file_uploader("Upload your MSSQL schema file")
@@ -68,21 +68,21 @@ def run_azure_config(config_dir = config_dir_path):
 run_azure_config()
 
 def reset_chat():
-    st.session_state["messages"] = []
+    st.session_state["chat_with_schema_messages"] = []
     st.session_state["uploaded_file"] = False
     st.session_state["uploaded_schema"] = None
 
 reset_chat_button = st.button("Reset Chat", on_click=reset_chat)
 
-if reset_chat_button or ("messages" not in st.session_state):
-    st.session_state["messages"] = [ChatMessage(role="assistant", content="I am an expert at writing MSSQL database queries. How can I help you?")]
+if reset_chat_button or ("chat_with_schema_messages" not in st.session_state):
+    st.session_state["chat_with_schema_messages"] = [ChatMessage(role="assistant", content="I am an expert at writing MSSQL database queries. How can I help you?")]
 
-for msg in st.session_state.messages:
+for msg in st.session_state.chat_with_schema_messages:
     if msg.role != "system":
         st.chat_message(msg.role).write(msg.content)
 
 if prompt := st.chat_input():
-    st.session_state.messages.append(ChatMessage(role="user", content=prompt))
+    st.session_state.chat_with_schema_messages.append(ChatMessage(role="user", content=prompt))
     st.chat_message("user").write(prompt)
 
     with st.chat_message("assistant"):
@@ -97,5 +97,5 @@ if prompt := st.chat_input():
             request_timeout=45,
             verbose=True,
         )
-        response = llm.invoke(st.session_state.messages)
-        st.session_state.messages.append(ChatMessage(role="assistant", content=response.content))
+        response = llm.invoke(st.session_state.chat_with_schema_messages)
+        st.session_state.chat_with_schema_messages.append(ChatMessage(role="assistant", content=response.content))

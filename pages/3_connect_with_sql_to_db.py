@@ -87,17 +87,18 @@ ORDER BY TABLE_NAME;
 """   
 test_db_connection(q)
 
-
+@logger.catch
 def convert_response_to_dataframe(response):
     try:
         python_obj_from_response = ast.literal_eval(response)
         # st.text(f"type of python_obj_from_results is:{type(python_obj_from_results)}") #type:list
         # write a function that lets you return the column names to put on top of results
-        df = pd.DataFrame(python_obj_from_response)
-        return df
+        if isinstance(python_obj_from_response, list):
+            df = pd.DataFrame(python_obj_from_response)
+            return df
+        return response
 
     except Exception as e:
-        logger.error(e)
         return str(e)
 
 
@@ -115,6 +116,7 @@ for msg in st.session_state.sql_messages:
     elif msg.role == "assistant":
         df = convert_response_to_dataframe(msg.content)
         if isinstance(df, pd.DataFrame):
+            st.chat_message(msg.role).write("assistant response below")
             st.dataframe(convert_response_to_dataframe(msg.content), use_container_width=True)
         elif df is None:
             st.chat_message(msg.role).write("response is None")
@@ -129,7 +131,10 @@ if prompt := st.chat_input():
     st.session_state.sql_messages.append(ChatMessage(role="user", content=prompt))
     st.chat_message("user").write(prompt)
 
+    try:
+        response: str = db.run(prompt)
+    except Exception as e:
+        response = str(e)
 
     with st.chat_message("assistant"):
-        response: str = db.run(prompt) 
         st.session_state.sql_messages.append(ChatMessage(role="assistant", content=response))
