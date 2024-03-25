@@ -18,7 +18,7 @@ st.markdown(f"### {LANGCHAIN_PROJECT}")
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
 MAX_TOKENS = 1000
-SCHEMA = {"schema":"sandbox"}
+SCHEMA = {"schema":"trg"}
 CONFIG_DIR_PATH = st.session_state["config_dir_path"]
 
 @logger.catch
