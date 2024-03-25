@@ -2,6 +2,7 @@ from pathlib import Path
 # import ast 
 import os
 import json
+from functools import partial
 import streamlit as st
 # import pandas as pd
 from langchain_openai import AzureChatOpenAI
@@ -41,7 +42,7 @@ if "default_schema_filename" not in st.session_state:
 
 @st.cache_resource
 def set_system_message(schema):
-    system_message = f"""
+    system_message_string = f"""
         You are an expert at writing Mircosoft SQL database queries and T-SQL code. 
         When asked to write SQL queries use the following schema
         \n\n\n
@@ -52,7 +53,7 @@ def set_system_message(schema):
         highest possible. Respond with the query and the accuracy score. If you give
         an accuracy score of 1 or 2, briefly state your reason.
         """
-    system_message = ChatMessage(role="user", content=system_message[:20000]) #### TRUNCATES the "system" MSG
+    system_message = ChatMessage(role="user", content=system_message_string) 
     st.session_state["chat_with_schema_system_message"] = system_message
     logger.info(f"first 500 chars of system message is {system_message.content[:500]}")
     st.session_state["chat_with_schema_messages"].append(system_message)
@@ -120,7 +121,7 @@ if prompt := st.chat_input():
     st.session_state.chat_with_schema_messages.append(ChatMessage(role="user", content=prompt))
     st.chat_message("user").write(prompt)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant"): #I should make a partial and add the stream_handler into it
         stream_handler = StreamHandler(st.empty())
         llm = AzureChatOpenAI(
             temperature=0,

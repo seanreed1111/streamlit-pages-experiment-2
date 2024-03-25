@@ -47,3 +47,6 @@ if "db" not in st.session_state:
 # establish the multiple chat message containers
 if "chat_with_schema_messages" not in st.session_state:
     st.session_state["chat_with_schema_messages"] = []
+
+if "sql_messages" not in st.session_state:
+    st.session_state["sql_messages"] = []
