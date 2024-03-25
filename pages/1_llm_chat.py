@@ -1,6 +1,6 @@
 import os
 import json
-from pprint import pprint
+# from pprint import pprint
 from pathlib import Path
 from loguru import logger
 from langchain.callbacks.base import BaseCallbackHandler
@@ -16,8 +16,6 @@ os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
 MAX_TOKENS = 1000
 
-config_dir_path = Path(r"C:\Users\sreed\OneDrive - West Monroe Partners\BD-Folders\WAB") / "config"
-
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
         self.container = container
@@ -27,21 +25,10 @@ class StreamHandler(BaseCallbackHandler):
         self.text += token
         self.container.markdown(self.text)
 
-def run_azure_config(config_dir = config_dir_path):
-    all_config_file_path = config_dir / "allconfig.json"
-    config = {}
-    with open(all_config_file_path) as json_config:
-        config.update(json.load(json_config))
-        for k in config:
-            os.environ[k] = config[k]
-
 def clear_chat_history():
     st.session_state.chat_history = []
 
 clear_chat_history = st.button('Clear Chat History', on_click=clear_chat_history)
-
-run_azure_config(config_dir_path)
-
 
 if "messages" not in st.session_state or clear_chat_history:
     st.session_state["messages"] = [ChatMessage(role="assistant", content="How can I help you?")]

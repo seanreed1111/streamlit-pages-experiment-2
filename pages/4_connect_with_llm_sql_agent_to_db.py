@@ -7,14 +7,14 @@ import os
 import json
 from langchain_community.chat_models.azure_openai import AzureChatOpenAI #deprecated class, fix later
 from langchain.agents import create_sql_agent
-from langchain.sql_database import SQLDatabase #from langchain_community.utilities.sql_database import SQLDatabase
+from langchain_community.utilities.sql_database import SQLDatabase
 from langchain.agents.agent_types import AgentType
 from langchain.callbacks import StreamlitCallbackHandler
-from langchain.agents.agent_toolkits import SQLDatabaseToolkit 
+from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from sqlalchemy import create_engine
 import sqlite3
-import sqlalchemy
-from sqlalchemy import create_engine
+# import sqlalchemy
+# from sqlalchemy import create_engine
 import urllib
 
 # LANGCHAIN_PROJECT = "Experiment #4 Chat With SQL Agent WAB DB"
