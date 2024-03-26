@@ -17,57 +17,26 @@ st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
-MAX_TOKENS = 1000
-SCHEMA = {"schema":"trg"}
-CONFIG_DIR_PATH = st.session_state["config_dir_path"]
+db = st.session_state["db"]
 
-@logger.catch
-@st.cache_resource(ttl="4h")
-def get_db_engine(db_config_file="dbconfig.json", config_dir_path = CONFIG_DIR_PATH, **kwargs):
-    
-    if not kwargs: 
-        kwargs = {"schema":"sandbox"}
-    
-    @st.cache_resource(ttl="4h")    
-    def get_wab_connection_string(db_config_file=db_config_file, config_dir_path=CONFIG_DIR_PATH ):
-        driver= '{ODBC Driver 18 for SQL Server}'
-        db_config_path = config_dir_path / db_config_file
 
-        with open(db_config_path) as json_file:
-            dbconfig = json.load(json_file)
+# test_query = """
+#     SELECT TABLE_NAME
+#     FROM INFORMATION_SCHEMA.TABLES
+#     WHERE TABLE_SCHEMA = 'trg'
+#     ORDER BY TABLE_NAME;
+#     """  
 
-        server = dbconfig['server']
-        database = dbconfig['database']
-        uid = dbconfig['username']
-        pwd = dbconfig['password']
-        port = int(dbconfig.get("port",1433))
-        pyodbc_connection_string = f"DRIVER={driver};SERVER={server};PORT={port};DATABASE={database};UID={uid};PWD={pwd};Encrypt=yes;Connection Timeout=30;READONLY=True;"
-        params = urllib.parse.quote_plus(pyodbc_connection_string)
-        sqlalchemy_connection_string = f"mssql+pyodbc:///?odbc_connect={params}"
-        return sqlalchemy_connection_string
-    
+# with st.sidebar:
+#     st.spinner("connecting to database..")
+#     try: 
+#         db = get_db_engine(**SCHEMA)
 
-    return SQLDatabase.from_uri(database_uri=get_wab_connection_string(),
-                                **kwargs
-                               )
-
-test_query = """
-    SELECT TABLE_NAME
-    FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_SCHEMA = 'trg'
-    ORDER BY TABLE_NAME;
-    """  
-
-with st.sidebar:
-    st.spinner("connecting to database..")
-    try: 
-        db = get_db_engine(**SCHEMA)
-
-        db.run(test_query)
-        st.success("Sucessfully connected to the database")
-    except Exception as e:
-        st.error(e)
-        logger.error(str(e))
+#         db.run(test_query)
+#         st.success("Sucessfully connected to the database")
+#     except Exception as e:
+#         st.error(e)
+#         logger.error(str(e))
 
 
 @logger.catch

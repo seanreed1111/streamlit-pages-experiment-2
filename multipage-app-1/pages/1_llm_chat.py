@@ -14,8 +14,6 @@ st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.title(LANGCHAIN_PROJECT)
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
-MAX_TOKENS = 1000
-
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
         self.container = container
@@ -45,7 +43,7 @@ if prompt := st.chat_input():
         llm = AzureChatOpenAI(
             temperature=0,
             streaming=True,
-            max_tokens=MAX_TOKENS,
+            max_tokens=st.session_state["max_tokens"],
             azure_deployment=os.environ["AZURE_OPENAI_API_DEPLOYMENT_NAME_GPT35"],
             azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
             model_name=os.environ["MODEL_NAME_GPT35"],

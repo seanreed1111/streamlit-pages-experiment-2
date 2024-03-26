@@ -109,7 +109,7 @@ class StreamHandler(BaseCallbackHandler):
 # reset_chat_button = st.button("Reset Chat", on_click=reset_chat)
 
 reset_chat_button = st.button("Reset Chat")
-if reset_chat_button or not st.session_state["chat_with_schema_messages"]:
+if reset_chat_button or not st.session_state["chat_with_schema_messages"] or "chat_with_schema_messages" not in st.session_state:
     content = "I am an expert at writing MSSQL database queries. If you upload your schema, I write more specific queries for you."
     st.session_state["chat_with_schema_messages"] = [ChatMessage(role="assistant", content=content)]
 
