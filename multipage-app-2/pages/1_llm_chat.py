@@ -9,7 +9,7 @@ from langchain.schema import ChatMessage
 from langchain_openai import AzureChatOpenAI
 import streamlit as st
 
-LANGCHAIN_PROJECT = "Experiment #1: Chat with LLM - multipage app"
+LANGCHAIN_PROJECT = "Multipage App #2 Chat with LLM - multipage app"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.title(LANGCHAIN_PROJECT)
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
@@ -44,9 +44,9 @@ if prompt := st.chat_input():
             temperature=0,
             streaming=True,
             max_tokens=st.session_state["max_tokens"],
-            azure_deployment=os.environ["AZURE_OPENAI_API_DEPLOYMENT_NAME_GPT35"],
+            azure_deployment=st.session_state["deployment_name"],
             azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
-            model_name=os.environ["MODEL_NAME_GPT35"],
+            model_name=st.session_state["model_name"],
             openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
             request_timeout=45,
             verbose=True,

@@ -39,6 +39,9 @@ with st.spinner("performing app setup script... please wait"):
     if "run_azure_config" not in st.session_state:
         run_azure_config(st.session_state["config_dir_path"])
         st.session_state["run_azure_config"] = True
+    
+    if st.session_state["run_azure_config"]:
+        st.info("Azure Configuration... done.")
 
     if "max_tokens" not in st.session_state:
         st.session_state["max_tokens"] = MAX_TOKENS
@@ -88,6 +91,9 @@ with st.spinner("performing app setup script... please wait"):
 
     if "sql_messages" not in st.session_state:
         st.session_state["sql_messages"] = []
+    
+    if "llm_python_agent_messages" not in st.session_state:
+            st.session_state["llm_python_agent_messages"] = []
     
     st.success("Setup completed! Please select a app to use from the sidebar.")
     

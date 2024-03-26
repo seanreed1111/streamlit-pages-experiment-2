@@ -12,7 +12,7 @@ import urllib
 from langchain.schema import ChatMessage
 from loguru import logger
 
-LANGCHAIN_PROJECT = "Connect With SQL To DB - multipage app"
+LANGCHAIN_PROJECT = "Multipage App #2 Connect With Pure SQL To DB"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT

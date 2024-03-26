@@ -20,10 +20,9 @@ from loguru import logger
 # from sqlalchemy import create_engine
 import urllib
 
-LANGCHAIN_PROJECT = f"Multipage App Chat With SQL Agent WAB DB"
+LANGCHAIN_PROJECT = f"Multipage App #2 Chat With SQL Agent WAB DB"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
-os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
 with st.sidebar:
     llm_choice_radio = st.radio("Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"])
@@ -34,6 +33,8 @@ with st.sidebar:
         st.session_state["agent_model_name"] = os.getenv("MODEL_NAME")     
         st.session_state["agent_deployment_name"] = os.getenv("AZURE_OPENAI_API_DEPLOYMENT_NAME")
     st.info(f"Now using {llm_choice_radio} as the underlying agent llm.")
+
+os.environ["LANGCHAIN_PROJECT"] = f"{LANGCHAIN_PROJECT} with {llm_choice_radio}"
 
 with st.spinner("Setting up agent...please wait"):
     CONFIG_DIR_PATH = st.session_state["config_dir_path"]
