@@ -36,7 +36,7 @@ with st.spinner("Setting up agent...please wait"):
     llm = AzureChatOpenAI(
                 temperature=0.05,
                 streaming=True,
-                max_tokens=st.session_state["max_tokens"],
+                # max_tokens=st.session_state["max_tokens"],
                 azure_deployment=st.session_state["python_agent_deployment_name"],
                 azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
                 model_name=st.session_state["python_agent_model_name"],

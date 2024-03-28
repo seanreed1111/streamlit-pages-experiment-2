@@ -11,7 +11,10 @@ st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
-SCHEMA = {"schema":"trg"}
+
+USETRG = True
+SCHEMA = {"schema":"trg"} if USETRG else {"schema":"sandbox"}
+
 MAX_TOKENS = 4000
 
 with st.sidebar:

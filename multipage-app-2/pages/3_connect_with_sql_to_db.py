@@ -20,12 +20,12 @@ os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 db = st.session_state["db"]
 
 
-# test_query = """
-#     SELECT TABLE_NAME
-#     FROM INFORMATION_SCHEMA.TABLES
-#     WHERE TABLE_SCHEMA = 'trg'
-#     ORDER BY TABLE_NAME;
-#     """  
+test_query = """
+    SELECT TABLE_NAME
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = 'trg'
+    ORDER BY TABLE_NAME;
+    """  
 
 # with st.sidebar:
 #     st.spinner("connecting to database..")

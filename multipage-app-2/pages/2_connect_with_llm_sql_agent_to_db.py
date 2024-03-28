@@ -10,7 +10,8 @@ from langchain_openai import AzureChatOpenAI
 from langchain.agents import create_sql_agent
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain.agents.agent_types import AgentType
-from langchain.callbacks import StreamlitCallbackHandler
+# from langchain.callbacks import StreamlitCallbackHandler
+from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain.schema import ChatMessage
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from sqlalchemy import create_engine
@@ -46,7 +47,7 @@ with st.spinner("Setting up agent...please wait"):
     llm = AzureChatOpenAI(
                 temperature=0.05,
                 streaming=True,
-                max_tokens=st.session_state["max_tokens"],
+                # max_tokens=st.session_state["max_tokens"],
                 azure_deployment=st.session_state["agent_deployment_name"],
                 azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
                 model_name=st.session_state["agent_model_name"],
@@ -77,6 +78,6 @@ if prompt := st.chat_input():
 
     with st.chat_message("assistant"):
         st_cb = StreamlitCallbackHandler(st.container())
-        response = agent.run(prompt, callbacks=[st_cb])
+        response = agent.invoke({"input":prompt}, callbacks=[st_cb])
         st.session_state.llm_sql_agent_messages.append({"role": "assistant", "content": response})
         st.write(response)
