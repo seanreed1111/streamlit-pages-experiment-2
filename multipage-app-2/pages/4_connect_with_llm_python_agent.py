@@ -1,4 +1,10 @@
-# reference docs https://python.langchain.com/docs/integrations/toolkits/python
+# reference docs 
+# - https://python.langchain.com/docs/integrations/toolkits/python
+# - https://github.com/langchain-ai/langchain/issues/5611#issuecomment-1603700131
+
+# - https://python.langchain.com/docs/integrations/tools/filesystem
+# - https://python.langchain.com/docs/modules/callbacks/filecallbackhandler
+
 import streamlit as st
 from pathlib import Path
 import os
@@ -7,13 +13,13 @@ from langchain_openai import AzureChatOpenAI
 # from langchain.callbacks import StreamlitCallbackHandler
 from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain.schema import ChatMessage
-from loguru import logger
-import urllib
+from langchain.memory import ConversationBufferMemory
 from langchain import hub
 from langchain.agents import AgentExecutor, Tool, create_react_agent
 from langchain_experimental.tools import PythonREPLTool
 from langchain.agents import create_openai_functions_agent
-import matplotlib
+from loguru import logger
+import urllib
 
 LANGCHAIN_PROJECT = f"Multipage App #2 Chat With Python Agent using create_openai_functions_agent and PythonREPLTool"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
@@ -48,8 +54,6 @@ if "run_azure_config" not in st.session_state:
     st.session_state["run_azure_config"] = True
 
 with st.spinner("Setting up python agent...please wait"):
-    CONFIG_DIR_PATH = st.session_state["config_dir_path"]
-
     llm = AzureChatOpenAI(
                 temperature=0.1,
                 streaming=True,
@@ -78,6 +82,9 @@ with st.spinner("Setting up python agent...please wait"):
         tools=tools, 
         max_execution_time=500,
         max_iterations=20,
+        return_intermediate_steps=True,
+        # handle_parsing_errors=True,
+        memory=None,
         verbose=True
     )
 
@@ -94,8 +101,17 @@ if prompt := st.chat_input():
     st.chat_message("user").write(prompt)
 
     # logger.info(f"the type of the prompt is {type(prompt)}")
+    # https://youtu.be/ynRpxQhCsfU?si=8GNYZQkt_O56Dbtz accessing intermediate steps
+    # https://python.langchain.com/docs/modules/agents/how_to/intermediate_steps
     with st.chat_message("assistant"):
         st_cb = StreamlitCallbackHandler(st.container())
         response = agent_executor.invoke({"input": prompt}, callbacks=[st_cb])
+
+        logger.debug(f"\ntype of response['intermediate_steps'] is {type(response['intermediate_steps'])}")
+        logger.debug(f"\nlength of response['intermediate_steps'] is {len(response['intermediate_steps'])}") 
+        logger.debug(f"\n item in response['intermediate_steps'] is {response['intermediate_steps'][-1]}")
+        logger.debug(f"\nthe final response is {response['output']}")                    
+        # for i, x in enumerate(response['intermediate_steps']):
+        #     logger.debug(f"\nintermediate_step {i}:{str(x)}\n")
         st.session_state.llm_python_agent_messages.append({"role": "assistant", "content": response})
         st.write(response)
