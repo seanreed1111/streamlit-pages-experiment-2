@@ -107,9 +107,9 @@ if prompt := st.chat_input():
         st_cb = StreamlitCallbackHandler(st.container())
         response = agent_executor.invoke({"input": prompt}, callbacks=[st_cb])
 
-        logger.debug(f"\ntype of response['intermediate_steps'] is {type(response['intermediate_steps'])}")
-        logger.debug(f"\nlength of response['intermediate_steps'] is {len(response['intermediate_steps'])}") 
-        logger.debug(f"\n item in response['intermediate_steps'] is {response['intermediate_steps'][-1]}")
+        # logger.debug(f"\ntype of response['intermediate_steps'] is {type(response['intermediate_steps'])}")
+        # logger.debug(f"\nlength of response['intermediate_steps'] is {len(response['intermediate_steps'])}") 
+        logger.debug(f"\nthe final item in response['intermediate_steps'] is {response['intermediate_steps'][-1]}")
         logger.debug(f"\nthe final response is {response['output']}")                    
         # for i, x in enumerate(response['intermediate_steps']):
         #     logger.debug(f"\nintermediate_step {i}:{str(x)}\n")
