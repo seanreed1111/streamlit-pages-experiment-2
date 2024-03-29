@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_cfeb0844d04ba3cf6864117ab772e0fa {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_cfeb0844d04ba3cf6864117ab772e0fa" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_cfeb0844d04ba3cf6864117ab772e0fa = L.map(
+                "map_cfeb0844d04ba3cf6864117ab772e0fa",
+                {
+                    center: [60.1087, -113.6426],
+                    crs: L.CRS.EPSG3857,
+                    zoom: 3,
+                    zoomControl: true,
+                    preferCanvas: false,
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_e74eec647437388988bbdac26a95fc0c = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detectRetina": false, "maxNativeZoom": 19, "maxZoom": 19, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            );
+        
+    
+            tile_layer_e74eec647437388988bbdac26a95fc0c.addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+            var marker_92b2fdf053d8563f07ed24315e4fb01d = L.marker(
+                [53.5461, -113.4938],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_33f667b6c986d2fc6a92a5b9dbd193e4 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_6c775e1ea0ae322c35d107c8385f01b3 = $(`<div id="html_6c775e1ea0ae322c35d107c8385f01b3" style="width: 100.0%; height: 100.0%;">Alberta</div>`)[0];
+                popup_33f667b6c986d2fc6a92a5b9dbd193e4.setContent(html_6c775e1ea0ae322c35d107c8385f01b3);
+            
+        
+
+        marker_92b2fdf053d8563f07ed24315e4fb01d.bindPopup(popup_33f667b6c986d2fc6a92a5b9dbd193e4)
+        ;
+
+        
+    
+    
+            var marker_57a8599e0644af08abe7780c6804e4b0 = L.marker(
+                [48.4284, -123.3656],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_6750929553344010c716321604aa8177 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_ce93c0b9f83494eaf0f27ff77663e340 = $(`<div id="html_ce93c0b9f83494eaf0f27ff77663e340" style="width: 100.0%; height: 100.0%;">British Columbia</div>`)[0];
+                popup_6750929553344010c716321604aa8177.setContent(html_ce93c0b9f83494eaf0f27ff77663e340);
+            
+        
+
+        marker_57a8599e0644af08abe7780c6804e4b0.bindPopup(popup_6750929553344010c716321604aa8177)
+        ;
+
+        
+    
+    
+            var marker_d7d8ab33fc4134661ddc8dc4b0b6cc06 = L.marker(
+                [49.8951, -97.1384],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_a6d1917be50443a3e83d0db897bc414b = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_ba89d9cd4e0d69fbcbe5ab41f5a65b7b = $(`<div id="html_ba89d9cd4e0d69fbcbe5ab41f5a65b7b" style="width: 100.0%; height: 100.0%;">Manitoba</div>`)[0];
+                popup_a6d1917be50443a3e83d0db897bc414b.setContent(html_ba89d9cd4e0d69fbcbe5ab41f5a65b7b);
+            
+        
+
+        marker_d7d8ab33fc4134661ddc8dc4b0b6cc06.bindPopup(popup_a6d1917be50443a3e83d0db897bc414b)
+        ;
+
+        
+    
+    
+            var marker_4a9364681d771e670828d6b1d5c1177d = L.marker(
+                [45.9636, -66.6431],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_dfbd53bd9611812bcb4448b8caadf878 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_39073b43d365b199ee0b2c6da995624a = $(`<div id="html_39073b43d365b199ee0b2c6da995624a" style="width: 100.0%; height: 100.0%;">New Brunswick</div>`)[0];
+                popup_dfbd53bd9611812bcb4448b8caadf878.setContent(html_39073b43d365b199ee0b2c6da995624a);
+            
+        
+
+        marker_4a9364681d771e670828d6b1d5c1177d.bindPopup(popup_dfbd53bd9611812bcb4448b8caadf878)
+        ;
+
+        
+    
+    
+            var marker_b19890290a2c1c7a29d1fda50f3479c8 = L.marker(
+                [47.5615, -52.7126],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_25ca56df7a2f8b04ee1d4b367a86109e = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e0d46b80d349d466eab62a86bbcf5cfb = $(`<div id="html_e0d46b80d349d466eab62a86bbcf5cfb" style="width: 100.0%; height: 100.0%;">Newfoundland and Labrador</div>`)[0];
+                popup_25ca56df7a2f8b04ee1d4b367a86109e.setContent(html_e0d46b80d349d466eab62a86bbcf5cfb);
+            
+        
+
+        marker_b19890290a2c1c7a29d1fda50f3479c8.bindPopup(popup_25ca56df7a2f8b04ee1d4b367a86109e)
+        ;
+
+        
+    
+    
+            var marker_4fd21c9497799fb2328820b9bfbee80b = L.marker(
+                [44.6488, -63.5752],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_ea09e3417cd28510884aff1596b5b84a = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_a1c0e9cb0670c0dd532ecf0f70e0b387 = $(`<div id="html_a1c0e9cb0670c0dd532ecf0f70e0b387" style="width: 100.0%; height: 100.0%;">Nova Scotia</div>`)[0];
+                popup_ea09e3417cd28510884aff1596b5b84a.setContent(html_a1c0e9cb0670c0dd532ecf0f70e0b387);
+            
+        
+
+        marker_4fd21c9497799fb2328820b9bfbee80b.bindPopup(popup_ea09e3417cd28510884aff1596b5b84a)
+        ;
+
+        
+    
+    
+            var marker_8ab7576c7a06b07396d114b67e2d1206 = L.marker(
+                [43.6511, -79.3832],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_94bc79744b2bf2ed0912807a37b80499 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_5f7e5995bb449a3c4a9420b18d3decc9 = $(`<div id="html_5f7e5995bb449a3c4a9420b18d3decc9" style="width: 100.0%; height: 100.0%;">Ontario</div>`)[0];
+                popup_94bc79744b2bf2ed0912807a37b80499.setContent(html_5f7e5995bb449a3c4a9420b18d3decc9);
+            
+        
+
+        marker_8ab7576c7a06b07396d114b67e2d1206.bindPopup(popup_94bc79744b2bf2ed0912807a37b80499)
+        ;
+
+        
+    
+    
+            var marker_800db5869252350bfd95a8e77be3bb8d = L.marker(
+                [46.2382, -63.1311],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_6b64ee0bb6961f7c4d54384b4bb5d6f4 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_33017cf13972a37eebbff9e93bf4198f = $(`<div id="html_33017cf13972a37eebbff9e93bf4198f" style="width: 100.0%; height: 100.0%;">Prince Edward Island</div>`)[0];
+                popup_6b64ee0bb6961f7c4d54384b4bb5d6f4.setContent(html_33017cf13972a37eebbff9e93bf4198f);
+            
+        
+
+        marker_800db5869252350bfd95a8e77be3bb8d.bindPopup(popup_6b64ee0bb6961f7c4d54384b4bb5d6f4)
+        ;
+
+        
+    
+    
+            var marker_637ad7e32148ebb194b7edfe719c7d2d = L.marker(
+                [46.8139, -71.208],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_34c4dd356ecffeade82b00106b4629a2 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_3dc887e5f1ffd984aa7a30136f379730 = $(`<div id="html_3dc887e5f1ffd984aa7a30136f379730" style="width: 100.0%; height: 100.0%;">Quebec</div>`)[0];
+                popup_34c4dd356ecffeade82b00106b4629a2.setContent(html_3dc887e5f1ffd984aa7a30136f379730);
+            
+        
+
+        marker_637ad7e32148ebb194b7edfe719c7d2d.bindPopup(popup_34c4dd356ecffeade82b00106b4629a2)
+        ;
+
+        
+    
+    
+            var marker_23c2bbec6515d98f652875cc9d12920f = L.marker(
+                [50.4452, -104.6189],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_df889281eca7f9fe56cace6c29086252 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e07083fd05a2b12b2f5a00d339221c02 = $(`<div id="html_e07083fd05a2b12b2f5a00d339221c02" style="width: 100.0%; height: 100.0%;">Saskatchewan</div>`)[0];
+                popup_df889281eca7f9fe56cace6c29086252.setContent(html_e07083fd05a2b12b2f5a00d339221c02);
+            
+        
+
+        marker_23c2bbec6515d98f652875cc9d12920f.bindPopup(popup_df889281eca7f9fe56cace6c29086252)
+        ;
+
+        
+    
+    
+            var marker_636a803a79c336799dfecbd6a3b6c8f9 = L.marker(
+                [62.454, -114.3718],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_38963ef64cdcbdc10119205974a7a7bf = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_c7b25db8891e827718d0170bbd11283d = $(`<div id="html_c7b25db8891e827718d0170bbd11283d" style="width: 100.0%; height: 100.0%;">Northwest Territories</div>`)[0];
+                popup_38963ef64cdcbdc10119205974a7a7bf.setContent(html_c7b25db8891e827718d0170bbd11283d);
+            
+        
+
+        marker_636a803a79c336799dfecbd6a3b6c8f9.bindPopup(popup_38963ef64cdcbdc10119205974a7a7bf)
+        ;
+
+        
+    
+    
+            var marker_bcf4749f25ca44e680585b68a81b57f7 = L.marker(
+                [63.7467, -68.517],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_bf3c5b5a828025b38448147ed5accb58 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_83850627dbbd3e9ab3ce0918e1793fca = $(`<div id="html_83850627dbbd3e9ab3ce0918e1793fca" style="width: 100.0%; height: 100.0%;">Nunavut</div>`)[0];
+                popup_bf3c5b5a828025b38448147ed5accb58.setContent(html_83850627dbbd3e9ab3ce0918e1793fca);
+            
+        
+
+        marker_bcf4749f25ca44e680585b68a81b57f7.bindPopup(popup_bf3c5b5a828025b38448147ed5accb58)
+        ;
+
+        
+    
+    
+            var marker_07a2947cba10fbfa6030d43b3f701ab7 = L.marker(
+                [60.7212, -135.0568],
+                {}
+            ).addTo(map_cfeb0844d04ba3cf6864117ab772e0fa);
+        
+    
+        var popup_a122975dfd3dff8522f6101633fa9cd8 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_2a34797167ef08083714441696a65a76 = $(`<div id="html_2a34797167ef08083714441696a65a76" style="width: 100.0%; height: 100.0%;">Yukon</div>`)[0];
+                popup_a122975dfd3dff8522f6101633fa9cd8.setContent(html_2a34797167ef08083714441696a65a76);
+            
+        
+
+        marker_07a2947cba10fbfa6030d43b3f701ab7.bindPopup(popup_a122975dfd3dff8522f6101633fa9cd8)
+        ;
+
+        
+    
+</script>
+</html>

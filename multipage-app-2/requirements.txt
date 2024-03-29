@@ -11,3 +11,9 @@ matplotlib
 seaborn
 ipython
 pandas
+plotly
+geopandas
+folium
+streamlit_folium
+geopy
+basemap

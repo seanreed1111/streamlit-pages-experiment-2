@@ -83,7 +83,7 @@ with st.spinner("Setting up python agent...please wait"):
         max_execution_time=500,
         max_iterations=20,
         return_intermediate_steps=True,
-        # handle_parsing_errors=True,
+        handle_parsing_errors=True,
         memory=None,
         verbose=True
     )
@@ -109,8 +109,8 @@ if prompt := st.chat_input():
 
         # logger.debug(f"\ntype of response['intermediate_steps'] is {type(response['intermediate_steps'])}")
         # logger.debug(f"\nlength of response['intermediate_steps'] is {len(response['intermediate_steps'])}") 
-        logger.debug(f"\nthe final item in response['intermediate_steps'] is {response['intermediate_steps'][-1]}")
-        logger.debug(f"\nthe final response is {response['output']}")                    
+        # logger.debug(f"\nthe final item in response['intermediate_steps'] is {response['intermediate_steps'][-1]}")
+        # logger.debug(f"\nthe final response is {response['output']}")                    
         # for i, x in enumerate(response['intermediate_steps']):
         #     logger.debug(f"\nintermediate_step {i}:{str(x)}\n")
         st.session_state.llm_python_agent_messages.append({"role": "assistant", "content": response})
