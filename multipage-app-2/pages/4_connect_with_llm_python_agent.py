@@ -41,15 +41,15 @@ os.environ["LANGCHAIN_PROJECT"] = f"{LANGCHAIN_PROJECT} with {llm_choice_radio_p
 if "config_dir_path" not in st.session_state:
     st.session_state["config_dir_path"] = Path(r"C:\Users\sreed\OneDrive - West Monroe Partners\BD-Folders\WAB") / "config"
 
-def run_azure_config(config_dir):
-    all_config_file_path = config_dir / "allconfig.json"
-    config = {}
-    with open(all_config_file_path) as json_config:
-        config.update(json.load(json_config))
-        for k in config:
-            os.environ[k] = config[k]
 
 if "run_azure_config" not in st.session_state:
+    def run_azure_config(config_dir):
+        all_config_file_path = config_dir / "allconfig.json"
+        config = {}
+        with open(all_config_file_path) as json_config:
+            config.update(json.load(json_config))
+            for k in config:
+                os.environ[k] = config[k]
     run_azure_config(st.session_state["config_dir_path"])
     st.session_state["run_azure_config"] = True
 
@@ -80,11 +80,11 @@ with st.spinner("Setting up python agent...please wait"):
     agent_executor = AgentExecutor(
         agent=agent, 
         tools=tools, 
-        max_execution_time=500,
+        max_execution_time=300,
         max_iterations=20,
         return_intermediate_steps=True,
         handle_parsing_errors=True,
-        memory=None,
+        memory=None, #setup memory
         verbose=True
     )
 

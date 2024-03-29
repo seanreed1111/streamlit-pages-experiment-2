@@ -39,10 +39,11 @@ os.environ["LANGCHAIN_PROJECT"] = f"{LANGCHAIN_PROJECT} with {llm_choice_radio}"
 
 with st.spinner("Setting up agent...please wait"):
     CONFIG_DIR_PATH = st.session_state["config_dir_path"]
-    db = st.session_state["db"]
-    # if ("agent_model_name" not in st.session_state) or ("agent_deployment_name" not in st.session_state):
-    #     st.session_state["agent_model_name"] = os.environ.get["MODEL_NAME_GPT35"]
-    #     st.session_state["agent_deployment_name"] = os.environ.get["AZURE_OPENAI_API_DEPLOYMENT_NAME_GPT35"]
+    try:
+        db = st.session_state["db"]
+    except:
+        st.error("Please go back to main app page and connect to the WAB database")
+        st.stop()
 
     llm = AzureChatOpenAI(
                 temperature=0.05,

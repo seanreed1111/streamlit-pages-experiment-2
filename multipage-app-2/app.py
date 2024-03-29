@@ -16,18 +16,11 @@ USETRG = True
 SCHEMA = {"schema":"trg"} if USETRG else {"schema":"sandbox"}
 
 # MAX_TOKENS = 4000
+# if "max_tokens" not in st.session_state:
+#     st.session_state["max_tokens"] = MAX_TOKENS
 
-with st.sidebar:
-    llm_choice_radio = st.radio("Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"])
-    if llm_choice_radio == "GPT-3.5-turbo":
-        st.session_state["model_name"] = os.getenv("MODEL_NAME_GPT35")
-        st.session_state["deployment_name"] = os.getenv("AZURE_OPENAI_API_DEPLOYMENT_NAME_GPT35")
-    elif llm_choice_radio == "GPT-4-turbo":
-        st.session_state["model_name"] = os.getenv("MODEL_NAME")   
-        st.session_state["deployment_name"] = os.getenv("AZURE_OPENAI_API_DEPLOYMENT_NAME")
-    st.info(f"Now using {llm_choice_radio} as the underlying llm.")
-
-with st.spinner("performing app setup script... please wait"):
+   
+with st.spinner("performing Azure configuration... please wait"):
     if "config_dir_path" not in st.session_state:
         st.session_state["config_dir_path"] = Path(r"C:\Users\sreed\OneDrive - West Monroe Partners\BD-Folders\WAB") / "config"
 
@@ -44,51 +37,48 @@ with st.spinner("performing app setup script... please wait"):
         st.session_state["run_azure_config"] = True
     
     if st.session_state["run_azure_config"]:
-        st.info("Azure Configuration... done.")
+        st.success("Azure Configuration... done.")
 
-    # if "max_tokens" not in st.session_state:
-    #     st.session_state["max_tokens"] = MAX_TOKENS
 
-   
+# establish chat messages for each page and add to session state
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
+if "sql_messages" not in st.session_state:
+    st.session_state["sql_messages"] = []
+if "llm_sql_agent_messages" not in st.session_state:
+        st.session_state["llm_sql_agent_messages"] = []
+if "llm_python_agent_messages" not in st.session_state:
+        st.session_state["llm_python_agent_messages"] = []
 
-    # establish chat messages for each page and add to session state
+with st.sidebar:
+    db_connection_radio = st.radio("Choose one", ["No DB Connection Needed", "Connect to WAB DB"])
+    if db_connection_radio == "Connect to WAB DB" and "db" not in st.session_state:
+        with st.spinner("performing database configuration and connecting... please wait"):
+            @st.cache_resource(ttl="2h")
+            def get_db_engine(db_config_file, config_dir_path, **kwargs):
+                
+                @st.cache_resource(ttl="2h")    
+                def get_wab_connection_string(db_config_file, config_dir_path):
+                    driver= '{ODBC Driver 18 for SQL Server}'
+                    db_config_path = config_dir_path / db_config_file
 
-    if "messages" not in st.session_state:
-        st.session_state["messages"] = []
-    if "sql_messages" not in st.session_state:
-        st.session_state["sql_messages"] = []
-    if "llm_sql_agent_messages" not in st.session_state:
-          st.session_state["llm_sql_agent_messages"] = []
-    if "llm_python_agent_messages" not in st.session_state:
-            st.session_state["llm_python_agent_messages"] = []
-    
-    if "db" not in st.session_state:
-        @st.cache_resource(ttl="4h")
-        def get_db_engine(db_config_file, config_dir_path, **kwargs):
-            
-            @st.cache_resource(ttl="4h")    
-            def get_wab_connection_string(db_config_file, config_dir_path):
-                driver= '{ODBC Driver 18 for SQL Server}'
-                db_config_path = config_dir_path / db_config_file
+                    with open(db_config_path) as json_file:
+                        dbconfig = json.load(json_file)
 
-                with open(db_config_path) as json_file:
-                    dbconfig = json.load(json_file)
+                    server = dbconfig['server']
+                    database = dbconfig['database']
+                    uid = dbconfig['username']
+                    pwd = dbconfig['password']
+                    port = int(dbconfig.get("port",1433))
+                    pyodbc_connection_string = f"DRIVER={driver};SERVER={server};PORT={port};DATABASE={database};UID={uid};PWD={pwd};Encrypt=yes;Connection Timeout=30;READONLY=True;"
+                    params = urllib.parse.quote_plus(pyodbc_connection_string)
+                    sqlalchemy_connection_string = f"mssql+pyodbc:///?odbc_connect={params}"
+                    return sqlalchemy_connection_string
+                
+                return SQLDatabase.from_uri(database_uri=get_wab_connection_string(db_config_file, config_dir_path), **kwargs
+                                        )
 
-                server = dbconfig['server']
-                database = dbconfig['database']
-                uid = dbconfig['username']
-                pwd = dbconfig['password']
-                port = int(dbconfig.get("port",1433))
-                pyodbc_connection_string = f"DRIVER={driver};SERVER={server};PORT={port};DATABASE={database};UID={uid};PWD={pwd};Encrypt=yes;Connection Timeout=30;READONLY=True;"
-                params = urllib.parse.quote_plus(pyodbc_connection_string)
-                sqlalchemy_connection_string = f"mssql+pyodbc:///?odbc_connect={params}"
-                return sqlalchemy_connection_string
-            
-
-            return SQLDatabase.from_uri(database_uri=get_wab_connection_string(db_config_file, config_dir_path), **kwargs
-                                    )
-
-        with st.spinner(".....connecting to database.."):
+        # connect and test
             test_query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;"
             try: 
                 db = get_db_engine(db_config_file ="dbconfig.json",config_dir_path = st.session_state["config_dir_path"],
@@ -98,7 +88,9 @@ with st.spinner("performing app setup script... please wait"):
                 st.session_state["db"] = db
                 st.success("Sucessfully connected to the database")
             except Exception as e:
+                st.warning("Database connection failed!")
                 st.error(e)
-                logger.error(str(e)) 
-    st.success("All setup completed! Please select a app to use from the sidebar.")
+                logger.error(str(e))
+    
+    st.info("Please select a app to use from the sidebar.")
     
