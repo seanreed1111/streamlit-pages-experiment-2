@@ -1,0 +1,10 @@
+langchain
+langchain_community
+langchain_experimental
+langchainhub
+langchain_openai 
+streamlit
+loguru
+sqlalchemy
+pyodbc
+asyncio

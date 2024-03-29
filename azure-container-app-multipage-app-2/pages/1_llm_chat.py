@@ -9,26 +9,10 @@ from langchain.schema import ChatMessage
 from langchain_openai import AzureChatOpenAI
 import streamlit as st
 
-LANGCHAIN_PROJECT = "Multipage App #2 Chat with LLM"
+LANGCHAIN_PROJECT = "Multipage App #2 Chat with LLM - multipage app"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.title(LANGCHAIN_PROJECT)
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
-
-
-if "config_dir_path" not in st.session_state:
-    st.session_state["config_dir_path"] = Path(r"C:\Users\sreed\OneDrive - West Monroe Partners\BD-Folders\WAB") / "config"
-
-def run_azure_config(config_dir):
-    all_config_file_path = config_dir / "allconfig.json"
-    config = {}
-    with open(all_config_file_path) as json_config:
-        config.update(json.load(json_config))
-        for k in config:
-            os.environ[k] = config[k]
-
-if "run_azure_config" not in st.session_state:
-    run_azure_config(st.session_state["config_dir_path"])
-    st.session_state["run_azure_config"] = True
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
@@ -59,7 +43,7 @@ if prompt := st.chat_input():
         llm = AzureChatOpenAI(
             temperature=0,
             streaming=True,
-            # max_tokens=st.session_state["max_tokens"],
+            max_tokens=st.session_state["max_tokens"],
             azure_deployment=st.session_state["deployment_name"],
             azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
             model_name=st.session_state["model_name"],

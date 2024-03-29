@@ -11,11 +11,8 @@ st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
-
-USETRG = True
-SCHEMA = {"schema":"trg"} if USETRG else {"schema":"sandbox"}
-
-# MAX_TOKENS = 4000
+SCHEMA = {"schema":"trg"}
+MAX_TOKENS = 4000
 
 with st.sidebar:
     llm_choice_radio = st.radio("Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"])
@@ -46,22 +43,9 @@ with st.spinner("performing app setup script... please wait"):
     if st.session_state["run_azure_config"]:
         st.info("Azure Configuration... done.")
 
-    # if "max_tokens" not in st.session_state:
-    #     st.session_state["max_tokens"] = MAX_TOKENS
+    if "max_tokens" not in st.session_state:
+        st.session_state["max_tokens"] = MAX_TOKENS
 
-   
-
-    # establish chat messages for each page and add to session state
-
-    if "messages" not in st.session_state:
-        st.session_state["messages"] = []
-    if "sql_messages" not in st.session_state:
-        st.session_state["sql_messages"] = []
-    if "llm_sql_agent_messages" not in st.session_state:
-          st.session_state["llm_sql_agent_messages"] = []
-    if "llm_python_agent_messages" not in st.session_state:
-            st.session_state["llm_python_agent_messages"] = []
-    
     if "db" not in st.session_state:
         @st.cache_resource(ttl="4h")
         def get_db_engine(db_config_file, config_dir_path, **kwargs):
@@ -99,6 +83,17 @@ with st.spinner("performing app setup script... please wait"):
                 st.success("Sucessfully connected to the database")
             except Exception as e:
                 st.error(e)
-                logger.error(str(e)) 
-    st.success("All setup completed! Please select a app to use from the sidebar.")
+                logger.error(str(e))
+
+    # establish the multiple chat message containers
+    if "chat_with_schema_messages" not in st.session_state:
+        st.session_state["chat_with_schema_messages"] = []
+
+    if "sql_messages" not in st.session_state:
+        st.session_state["sql_messages"] = []
+    
+    if "llm_python_agent_messages" not in st.session_state:
+            st.session_state["llm_python_agent_messages"] = []
+    
+    st.success("Setup completed! Please select a app to use from the sidebar.")
     
