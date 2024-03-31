@@ -10,7 +10,8 @@ from langchain_openai import AzureChatOpenAI
 from langchain.agents import create_sql_agent
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain.agents.agent_types import AgentType
-from langchain.callbacks import StreamlitCallbackHandler
+# from langchain.callbacks import StreamlitCallbackHandler
+from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain.schema import ChatMessage
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from sqlalchemy import create_engine
@@ -38,15 +39,16 @@ os.environ["LANGCHAIN_PROJECT"] = f"{LANGCHAIN_PROJECT} with {llm_choice_radio}"
 
 with st.spinner("Setting up agent...please wait"):
     CONFIG_DIR_PATH = st.session_state["config_dir_path"]
-    db = st.session_state["db"]
-    # if ("agent_model_name" not in st.session_state) or ("agent_deployment_name" not in st.session_state):
-    #     st.session_state["agent_model_name"] = os.environ.get["MODEL_NAME_GPT35"]
-    #     st.session_state["agent_deployment_name"] = os.environ.get["AZURE_OPENAI_API_DEPLOYMENT_NAME_GPT35"]
+    try:
+        db = st.session_state["db"]
+    except:
+        st.error("Please go back to main app page and connect to the WAB database")
+        st.stop()
 
     llm = AzureChatOpenAI(
-                temperature=0.05,
+                temperature=0.1,
                 streaming=True,
-                max_tokens=st.session_state["max_tokens"],
+                # max_tokens=st.session_state["max_tokens"],
                 azure_deployment=st.session_state["agent_deployment_name"],
                 azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
                 model_name=st.session_state["agent_model_name"],
@@ -57,11 +59,12 @@ with st.spinner("Setting up agent...please wait"):
 
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)
 
-    agent = create_sql_agent(
+    agent_executor = create_sql_agent(
         llm=llm,
         toolkit=toolkit,
         verbose=True,
         agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        agent_executor_kwargs={"return_intermediate_steps":True}
     )
     st.success("Agent setup done!")
 
@@ -77,6 +80,6 @@ if prompt := st.chat_input():
 
     with st.chat_message("assistant"):
         st_cb = StreamlitCallbackHandler(st.container())
-        response = agent.run(prompt, callbacks=[st_cb])
+        response = agent_executor.invoke({"input":prompt}, callbacks=[st_cb])
         st.session_state.llm_sql_agent_messages.append({"role": "assistant", "content": response})
         st.write(response)

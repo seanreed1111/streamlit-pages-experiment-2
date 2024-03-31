@@ -7,4 +7,13 @@ streamlit
 loguru
 sqlalchemy
 pyodbc
-asyncio
+matplotlib
+seaborn
+ipython
+pandas
+plotly
+geopandas
+folium
+streamlit_folium
+geopy
+basemap
