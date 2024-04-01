@@ -1,0 +1,31 @@
+api-version: 2019-12-01
+location: westus3
+name: demo_project
+properties:
+  containers:
+  - name: streamlitapp
+    properties:
+      image: IMAGE_NAME
+      ports:
+      - port: 80
+        protocol: TCP
+      - port: 443
+        protocol: TCP
+      resources:
+        requests:
+          cpu: 2.0
+          memoryInGB: 5.0
+  imageRegistryCredentials:
+  - server: REGISTRY_NAME_azurecr_io
+    username: REGISTRY_NAME
+    password: SECRET
+  restartPolicy: Never
+  ipAddress:
+    ports:
+    - port: 80
+      protocol: TCP
+    type: Public
+    dnsNameLabel: streamlitllmappv1
+  osType: Linux
+tags: null
+type: Microsoft.ContainerInstance/containerGroups
