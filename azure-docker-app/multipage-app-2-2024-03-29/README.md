@@ -1,1 +1,1 @@
-# reference: https://robkerr.ai/publish-streamlit-app-docker-azure-container/
+# reference: https://towardsdatascience.com/beginner-guide-to-streamlit-deployment-on-azure-f6618eee1ba9

@@ -12,13 +12,15 @@ RUN apt-get update && apt-get install -y \
     unixodbc-dev
 
 WORKDIR /app
-COPY  . .
-
+COPY  scripts/msodbcsql18_18.3.2.1-1_amd64.deb .
+COPY  scripts/mssql-tools18_18.2.1.1-1_amd64.deb .
 RUN ACCEPT_EULA=Y apt-get install -y /app/scripts/msodbcsql18_18.3.2.1-1_amd64.deb && \
     ACCEPT_EULA=Y apt-get install -y /app/scripts/mssql-tools18_18.2.1.1-1_amd64.deb && \
     echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc && \
-    . ~/.bashrc && \
-    pip3 install -r requirements.txt
+    . ~/.bashrc
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+COPY . .
 
 EXPOSE 8501
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
