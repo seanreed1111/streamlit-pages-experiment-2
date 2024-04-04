@@ -63,7 +63,7 @@ with st.spinner("Setting up agent...please wait"):
         llm=llm,
         toolkit=toolkit,
         verbose=True,
-        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        agent_type="openai-tools",
         max_iterations=10,
         handle_parsing_errors=True,
         agent_executor_kwargs={"return_intermediate_steps":True}

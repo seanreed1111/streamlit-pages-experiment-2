@@ -17,11 +17,6 @@ os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 USETRG = True
 SCHEMA = {"schema": "trg"} if USETRG else {"schema": "sandbox"}
 
-# MAX_TOKENS = 4000
-# if "max_tokens" not in st.session_state:
-#     st.session_state["max_tokens"] = MAX_TOKENS
-
-
 with st.spinner("performing Azure configuration... please wait"):
     if "config_dir_path" not in st.session_state:
         st.session_state["config_dir_path"] = Path.cwd() / "config"
