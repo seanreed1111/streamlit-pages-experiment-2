@@ -47,7 +47,7 @@ with st.spinner("Setting up agent...please wait"):
         st.stop()
 
     llm = AzureChatOpenAI(
-                temperature=0.1,
+                temperature=0.05,
                 streaming=True,
                 azure_deployment=st.session_state["agent_deployment_name"],
                 azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
@@ -65,6 +65,7 @@ with st.spinner("Setting up agent...please wait"):
         verbose=True,
         agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         max_iterations=10,
+        handle_parsing_errors=True,
         agent_executor_kwargs={"return_intermediate_steps":True}
     )
     st.success("Agent setup done!")
