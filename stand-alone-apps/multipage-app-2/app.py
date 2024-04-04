@@ -22,7 +22,7 @@ SCHEMA = {"schema":"trg"} if USETRG else {"schema":"sandbox"}
    
 with st.spinner("performing Azure configuration... please wait"):
     if "config_dir_path" not in st.session_state:
-        st.session_state["config_dir_path"] = Path(r"C:\Users\sreed\OneDrive - West Monroe Partners\BD-Folders\WAB") / "config"
+        st.session_state["config_dir_path"] = Path.home() / "config"
 
     def run_azure_config(config_dir):
         all_config_file_path = config_dir / "allconfig.json"
