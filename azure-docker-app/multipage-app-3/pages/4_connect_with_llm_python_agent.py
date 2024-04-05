@@ -4,7 +4,7 @@ import os
 import tempfile
 import urllib
 from pathlib import Path
-
+import sys
 import folium
 import geopandas
 import geopy
@@ -44,9 +44,13 @@ st.markdown(f"### {LANGCHAIN_PROJECT}")
 
 now = str(datetime.date.today())
 temp_dir_path = tempfile.mkdtemp(prefix=now)
-
+log_file_path = Path(temp_dir_path) / "csv_python_agent.log" #appends automatically if file exists
 st.session_state["temp_dir_path"] = Path(temp_dir_path)
 logger.info(f"created {temp_dir_path=}")
+log_level = "DEBUG"
+log_format = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS zz}</green> | <level>{level: <8}</level> | <yellow>Line {line: >4} ({file}):</yellow> <b>{message}</b>"
+logger.add(sys.stderr, level=log_level, format=log_format, colorize=True, backtrace=True, diagnose=True)
+logger.add(log_file_path, level=log_level, format=log_format, colorize=False, backtrace=True, diagnose=True)
 
 with st.sidebar:
     st.markdown("## PICK LLM")
@@ -77,12 +81,15 @@ if "config_dir_path" not in st.session_state:
 
 
 # TTD
-# file has been uploaded successfully
-# save file to memory
-# create python agent
-# give agent key to memory
+# agent still does not know where to find the csv file. it is currently looking for it in the 
+# temp_dir_path. I did not want to feed the entire file into the system message
+# as that is not sustainable.
+# maybe the answer is to drop down from file uploader and go
+# back to stringifying and saving the file to tempdir manually using BytesIO library
+
 
 # tell agent where the file is located via system message
+# 
 
 # upload file
 # see also langchain.storage for storage https://api.python.langchain.com/en/latest/langchain_api_reference.html#module-langchain.storage
@@ -177,7 +184,8 @@ if (
     ]
 
 for msg in st.session_state.llm_python_agent_messages:
-    st.chat_message(msg["role"]).write(msg["content"])
+    if msg["role"] != "system":
+        st.chat_message(msg["role"]).write(msg["content"])
 
 if prompt := st.chat_input():
     st.session_state.llm_python_agent_messages.append(
