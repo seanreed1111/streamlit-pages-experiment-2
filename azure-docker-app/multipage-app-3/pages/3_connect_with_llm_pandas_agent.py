@@ -32,7 +32,11 @@ from langchain.prompts import (
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
 )
+from langchain.output_parsers import OutputFixingParser
+
+
 from langchain.schema import ChatMessage
+from langchain.storage import InMemoryStore, LocalFileStore
 from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain_experimental.agents.agent_toolkits import create_csv_agent
 from langchain_experimental.tools import PythonREPLTool
@@ -40,12 +44,9 @@ from langchain_openai import AzureChatOpenAI
 from loguru import logger
 from mpl_toolkits.basemap import Basemap
 
-LANGCHAIN_PROJECT = (
-    f"Multipage App #3 Chat With Python Agent using create_openai_functions_agent"
-)
+LANGCHAIN_PROJECT = "Multipage App #3 Chat With CSV"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
-os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
 with st.sidebar:
     st.markdown("## PICK LLM")
@@ -75,6 +76,7 @@ if "config_dir_path" not in st.session_state:
     st.stop()
 
 # upload file
+# see also langchain.storage for storage https://api.python.langchain.com/en/latest/langchain_api_reference.html#module-langchain.storage
 with st.sidebar:
     st.markdown("### UPLOAD FILE")
     file_uploader_radio = st.radio("Choose one", ["no file needed", "upload file"])
@@ -83,10 +85,11 @@ with st.sidebar:
         if uploaded_file:
             st.session_state["filename"] = uploaded_file.name
             st.session_state["uploaded_file"] = uploaded_file
-            st.success(f"file {uploaded_file.name} uploaded successfully")
+
             st.session_state["uploaded_file_exists"] = True
             if uploaded_file.name.endswith("csv"):
                 st.session_state["csv_exists"] = True
+            st.success(f"file {uploaded_file.name} uploaded successfully")
 
     elif file_uploader_radio == "no file needed":
         st.session_state["filename"] = None
@@ -132,15 +135,15 @@ with st.spinner("Setting up python agent...please wait"):
             verbose=True,
         )
 
-    def get_csv_agent_executor(llm, filename):
+    def get_csv_agent_executor(llm, file):
         return create_csv_agent(
             llm,
-            filename,
+            file,
             verbose=True,
             agent_type="openai-tools",
             max_iterations=10,
             return_intermediate_steps=True,
-            handle_parsing_errors=True,
+            # handle_parsing_errors=True,
             max_execution_time=100,
         )
 

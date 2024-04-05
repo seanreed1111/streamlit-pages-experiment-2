@@ -14,6 +14,12 @@ import streamlit as st
 from langchain.agents import create_sql_agent
 from langchain.agents.agent_types import AgentType
 from langchain.schema import ChatMessage
+from langchain.storage import InMemoryStore
+from langchain.storage import LocalFileStore
+from langchain.storage import LocalFileStore
+
+# # Instantiate the LocalFileStore with the root path
+# file_store = LocalFileStore("/path/to/root")
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 
 # from langchain.callbacks import StreamlitCallbackHandler
