@@ -2,12 +2,13 @@ import json
 import os
 import urllib
 from pathlib import Path
+from pprint import pprint
 
-import basemap
 import folium
 import geopandas
 import geopy
-import ipython
+
+# import ipython
 import matplotlib
 import pandas
 import plotly
@@ -22,16 +23,23 @@ from langchain.agents import (
     create_openai_functions_agent,
     create_react_agent,
 )
+from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 from langchain.memory import ConversationBufferMemory
+from langchain.prompts import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    MessagesPlaceholder,
+)
 from langchain.schema import ChatMessage
-
-# from langchain.callbacks import StreamlitCallbackHandler
 from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain_experimental.tools import PythonREPLTool
 from langchain_openai import AzureChatOpenAI
 from loguru import logger
+from mpl_toolkits.basemap import Basemap
 
-LANGCHAIN_PROJECT = f"Multipage App #3 Chat With Python Agent using create_openai_functions_agent and PythonREPLTool"
+LANGCHAIN_PROJECT = (
+    f"Multipage App #3 Chat With Python Agent using create_openai_functions_agent"
+)
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
@@ -59,30 +67,13 @@ os.environ["LANGCHAIN_PROJECT"] = (
 )
 
 if "config_dir_path" not in st.session_state:
-    st.session_state["config_dir_path"] = (
-        Path(r"C:\Users\sreed\OneDrive - West Monroe Partners\BD-Folders\WAB")
-        / "config"
-    )
-
-
-if "run_azure_config" not in st.session_state:
-
-    def run_azure_config(config_dir):
-        all_config_file_path = config_dir / "allconfig.json"
-        config = {}
-        with open(all_config_file_path) as json_config:
-            config.update(json.load(json_config))
-            for k in config:
-                os.environ[k] = config[k]
-
-    run_azure_config(st.session_state["config_dir_path"])
-    st.session_state["run_azure_config"] = True
+    st.info("please ensure that you've completed loading the main (app) page")
+    st.stop()
 
 with st.spinner("Setting up python agent...please wait"):
     llm = AzureChatOpenAI(
-        temperature=0.1,
+        temperature=0.05,
         streaming=True,
-        # max_tokens=st.session_state["max_tokens"],
         azure_deployment=st.session_state["python_agent_deployment_name"],
         azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
         model_name=st.session_state["python_agent_model_name"],
@@ -97,16 +88,19 @@ with st.spinner("Setting up python agent...please wait"):
     If you get an error, debug your code and try again.
     Only use the output of your code to answer the question. 
     You might know the answer without running any code, but you should still run the code to get the answer.
+    If you are asked to write code, return only the code with no additional text or tests.
     If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
     """
     base_prompt = hub.pull("langchain-ai/openai-functions-template")
+    logger.info(f"{base_prompt=}")
     prompt = base_prompt.partial(instructions=instructions)
+    logger.info("prompt from hub is:" +str(prompt))
     agent = create_openai_functions_agent(llm, tools, prompt)
     agent_executor = AgentExecutor(
         agent=agent,
         tools=tools,
         max_execution_time=300,
-        max_iterations=20,
+        max_iterations=10,
         return_intermediate_steps=True,
         handle_parsing_errors=True,
         memory=None,  # setup memory
@@ -136,19 +130,10 @@ if prompt := st.chat_input():
     )
     st.chat_message("user").write(prompt)
 
-    # logger.info(f"the type of the prompt is {type(prompt)}")
-    # https://youtu.be/ynRpxQhCsfU?si=8GNYZQkt_O56Dbtz accessing intermediate steps
-    # https://python.langchain.com/docs/modules/agents/how_to/intermediate_steps
     with st.chat_message("assistant"):
         st_cb = StreamlitCallbackHandler(st.container())
         response = agent_executor.invoke({"input": prompt}, callbacks=[st_cb])
 
-        # logger.debug(f"\ntype of response['intermediate_steps'] is {type(response['intermediate_steps'])}")
-        # logger.debug(f"\nlength of response['intermediate_steps'] is {len(response['intermediate_steps'])}")
-        # logger.debug(f"\nthe final item in response['intermediate_steps'] is {response['intermediate_steps'][-1]}")
-        # logger.debug(f"\nthe final response is {response['output']}")
-        # for i, x in enumerate(response['intermediate_steps']):
-        #     logger.debug(f"\nintermediate_step {i}:{str(x)}\n")
         st.session_state.llm_python_agent_messages.append(
             {"role": "assistant", "content": response}
         )
