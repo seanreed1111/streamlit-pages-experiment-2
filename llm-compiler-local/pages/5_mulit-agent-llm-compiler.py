@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 # # LLMCompiler
 #
 # This notebook shows how to implement [LLMCompiler, by Kim, et. al](https://arxiv.org/abs/2312.04511) in LangGraph.
@@ -51,99 +48,111 @@ from langchain_core.tools import BaseTool  # , tool
 from langchain_openai import AzureChatOpenAI
 from langgraph.graph import END, MessageGraph
 from loguru import logger
-from math_tools import get_math_tool
-from output_parser import LLMCompilerPlanParser, Task
-from typing_extensions import TypedDict
-
 if "src" not in sys.path:
     sys.path.append("../src")  # needed to get the azure config imports to run
-from config import LOCAL_CONFIG_DIR, run_azure_config
 
+from src.math_tools import get_math_tool
+from src.output_parser import LLMCompilerPlanParser, Task
+from typing_extensions import TypedDict
 RECURSION_LIMIT = 10
 
-run_azure_config(LOCAL_CONFIG_DIR)
+if "config_dir_path" not in st.session_state:
+    st.info("please ensure that you've completed loading the main (app) page")
+    st.stop()
 
-# now = str(datetime.date.today())
-log_dir = Path.home() / "PythonProjects" / "logs"
-log_dir.mkdir(exist_ok=True, parents=True)
-log_file_name = Path(__file__).stem + ".log"
-log_file_path = log_dir / log_file_name
+def logger_setup():
+    log_dir = Path.home() / "PythonProjects" / "logs"
+    log_dir.mkdir(exist_ok=True, parents=True)
+    log_file_name = Path(__file__).stem + ".log"
+    log_file_path = log_dir / log_file_name
+    log_level = "DEBUG"
+    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <yellow>Line {line: >4} ({file}):</yellow> <b>{message}</b>"
+    logger.add(
+        sys.stderr,
+        level=log_level,
+        format=log_format,
+        colorize=True,
+        backtrace=True,
+        diagnose=True,
+    )
+    logger.add(
+        log_file_path,
+        level=log_level,
+        format=log_format,
+        colorize=False,
+        backtrace=True,
+        diagnose=True,
+    )
 
-log_level = "DEBUG"
-log_format = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS zz}</green> | <level>{level: <8}</level> | <yellow>Line {line: >4} ({file}):</yellow> <b>{message}</b>"
-logger.add(
-    sys.stderr,
-    level=log_level,
-    format=log_format,
-    colorize=True,
-    backtrace=True,
-    diagnose=True,
-)
-logger.add(
-    log_file_path,
-    level=log_level,
-    format=log_format,
-    colorize=False,
-    backtrace=True,
-    diagnose=True,
-)
+logger_setup()
 
-
-use_gpt_4 = input("Use GPT 4? (y or n)").lower()
-if use_gpt_4 == "y":
-    model_name = os.getenv("MODEL_NAME_GPT")
-    deployment_name = os.getenv("AZURE_OPENAI_API_DEPLOYMENT_NAME_GPT")
-    logger.info("using gpt 4")
-else:
-    model_name = os.getenv("MODEL_NAME_GPT35")
-    deployment_name = os.getenv("AZURE_OPENAI_API_DEPLOYMENT_NAME_GPT35")
-    logger.info("using gpt 3.5")
+with st.sidebar:
+    st.markdown("## PICK LLM")
+    llm_choice_radio_multi_agent = st.radio(
+        "Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"]
+    )
+    if llm_choice_radio_multi_agent == "GPT-3.5-turbo":
+        st.session_state["multi_agent_model_name"] = os.getenv("MODEL_NAME_GPT35")
+        st.session_state["multi_agent_deployment_name"] = os.getenv(
+            "AZURE_OPENAI_API_DEPLOYMENT_NAME_GPT35"
+        )
+    elif llm_choice_radio_multi_agent == "GPT-4-turbo":
+        st.session_state["multi_agent_model_name"] = os.getenv("MODEL_NAME")
+        st.session_state["multi_agent_deployment_name"] = os.getenv(
+            "AZURE_OPENAI_API_DEPLOYMENT_NAME"
+        )
+    st.info(
+        f"Now using {llm_choice_radio_multi_agent} as the underlying llm."
+    )
 
 os.environ["LANGCHAIN_PROJECT"] = (
-    f"{Path(__file__).stem}-langgraph-examples-dir-{model_name}"
+    f"{Path(__file__).stem}-using-{model_name}"
 )
 
+with st.sidebar:
+    st.markdown("### UPLOAD FILE")
+    file_uploader_radio = st.radio("Choose one", ["no file needed", "upload file"])
+    if file_uploader_radio == "upload file":
+        uploaded_file = st.file_uploader("Choose a file")
+        logger.info(f"\ntype of uploaded file is {type(uploaded_file)}\n")
+        if uploaded_file:
+            st.session_state["filename"] = uploaded_file.name
+            st.session_state["uploaded_file"] = uploaded_file
+            st.session_state["uploaded_file_exists"] = True
 
-# ## Part 1: Tools
-#
-# We'll first define the tools for the agent to use in our demo. We'll give it the class search engine + calculator combo.
+            st.success(f"file {uploaded_file.name} uploaded successfully")
 
+    elif file_uploader_radio == "no file needed":
+        st.session_state["filename"] = None
+        st.session_state["uploaded_file"] = None
+        st.session_state["uploaded_file_exists"] = False
+        st.session_state["csv_exists"] = False
 
-# EXAMPLE 1
-llm = AzureChatOpenAI(
-    temperature=0.05,
-    streaming=True,
-    model_name=model_name,
-    azure_deployment=deployment_name,
-    azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
-    openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
-    request_timeout=120,
-    verbose=False,
-)
+with st.spinner("Setting up multi-agent...please wait"):
+    llm = AzureChatOpenAI(
+        temperature=0.05,
+        streaming=True,
+        model_name=st.session_state["multi_agent_model_name"],
+        azure_deployment=st.session_state["multi_agent_deployment_name"],
+        azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
+        openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+        request_timeout=120,
+        verbose=True,
+    )
 
+# Initialize tools
 calculate = get_math_tool(llm)
 search = TavilySearchResults(
-    max_results=10,
+    max_results=4,
     description='tavily_search_results_json(query="the search query") - a search engine.',
 )
 
 tools = [search, calculate]
 
-# calculate.invoke(
-#     {
-#         "problem": "What's the temp of Denver + 5?",
-#         "context": ["The temperature of Denver is 32 degrees"],
-#     }
-# )
-
-# # Part 2: Planner
-#
-#
-# Largely adapted from [the original source code](https://github.com/SqueezeAILab/LLMCompiler/blob/main/src/llm_compiler/output_parser.py), the planner  accepts the input question and generates a task list to execute.
-#
-# If it is provided with a previous plan, it is instructed to re-plan, which is useful if, upon completion of the first batch of tasks, the agent must take more actions.
-#
-# The code below composes constructs the prompt template for the planner and composes it with LLM and output parser, defined in [output_parser.py](./output_parser.py). The output parser processes a task list in the following form:
+# Planner
+# The code below composes constructs the prompt template for the planner and composes it 
+# with LLM and output parser, defined in [output_parser.py](./output_parser.py). 
+# The output parser processes a task list in the following form:
 #
 # ```plaintext
 # 1. tool_1(arg1="arg1", arg2=3.5, ...)
@@ -152,12 +161,11 @@ tools = [search, calculate]
 # 3. join()<END_OF_PLAN>"
 # ```
 #
-# The "Thought" lines are optional. The `${#}` placeholders are variables. These are used to route tool (task) outputs to other tools.
+# The "Thought" lines are optional. The `${#}` placeholders are variables. 
+# These are used to route tool (task) outputs to other tools.
 
 prompt = hub.pull("wfh/llm-compiler")
-print("prompt is", prompt.pretty_print())
 logger.info(f"\nHere is the llm-compiler prompt {str(prompt)}\n")
-
 
 @logger.catch
 def create_planner(
@@ -167,12 +175,11 @@ def create_planner(
         f"{i+1}. {included_tool.description}\n"
         for i, included_tool in enumerate(
             tools
-        )  # +1 to offset the 0 starting index, we want it count normally from 1.
+        )
     )
     planner_prompt = base_prompt.partial(
         replan="",
-        num_tools=len(tools)
-        + 1,  # Add one because we're adding the join() tool at the end.
+        num_tools=len(tools)+ 1,  # +1 is for the join() tool.
         tool_descriptions=tool_descriptions,
     )
     replanner_prompt = base_prompt.partial(
@@ -215,11 +222,11 @@ def create_planner(
 # This is the primary "agent" in our application
 planner = create_planner(llm, tools, prompt)
 
-example_question = "What's the temperature in Denver raised to the 2rd power?"
+# example_question = "What's the temperature in Denver raised to the 2rd power?"
 
-for task in planner.stream([HumanMessage(content=example_question)]):
-    print(task["tool"], task["args"])
-    print("---")
+# for task in planner.stream([HumanMessage(content=example_question)]):
+#     print(task["tool"], task["args"])
+#     print("---")
 
 @logger.catch
 def _get_observations(messages: List[BaseMessage]) -> Dict[int, Any]:
@@ -433,7 +440,7 @@ joiner_prompt = hub.pull("wfh/llm-compiler-joiner").partial(
     examples=""
 )  # You can optionally add examples
 
-logger.info(f"\nHere is the llm-compiler joiner_prompt {str(joiner_prompt)}\n")
+# logger.info(f"\nHere is the llm-compiler joiner_prompt {str(joiner_prompt)}\n")
 runnable = create_structured_output_runnable(JoinOutputs, llm, joiner_prompt)
 
 # We will select only the most recent messages in the state, and format the output to be more useful for
@@ -470,10 +477,9 @@ input_messages = [HumanMessage(content=example_question)] + tool_messages
 joiner.invoke(input_messages)
 
 
-# ## 5. Compose using LangGraph
+# ## Compose using LangGraph
 
 # We'll define the agent as a stateful graph, with the main nodes being:
-
 # 1. Plan and execute (the DAG from the first step above)
 # 2. Join: determine if we should finish or replan
 # 3. Recontextualize: update the graph state based on the output from the joiner
@@ -507,21 +513,53 @@ chain = graph_builder.compile()
     #     What is the sum of the GDPs, in Billions of US Dollars"
     #     )
     # ],
-inp = input("what is your question?")
-
-for step in chain.stream(
-    [
-        HumanMessage(
-            content=inp
-        )
-    ],
-    {
-        "recursion_limit": RECURSION_LIMIT,
-    },
+if (
+    "llm_multi_agent_messages" not in st.session_state
+    or st.button("Clear message history")
+    or not st.session_state.llm_python_agent_messages
 ):
-    logger.info(str(step))
+    if st.session_state["uploaded_file_exists"]:
+        initial_content = f"How can I help you with the file you uploaded?"
 
+    else:
+        initial_content = "How can I help you?"
 
+    st.session_state["llm_multi_agent_messages"] = [
+        # {
+        #     "role": "system",
+        #     "content": f"You are an again that can write and execute python code. you have access \
+        #         to data in a file {st.session_state['filename']}",
+        # },
+        {
+            "role": "assistant",
+            "content": initial_content,
+        },
+    ]
+
+for msg in st.session_state.llm_multi_agent_messages:
+    if msg["role"] != "system":
+        st.chat_message(msg["role"]).write(msg["content"])
+
+if user_input := st.chat_input():
+    st.session_state.llm_multi_agent_messages.append(
+        {"role": "user", "content": user_input}
+    )
+    st.chat_message("user").write(user_input)
+    with st.spinner():
+        steps = chain.stream(
+            [
+                HumanMessage(content=user_input)
+            ],
+            {
+                "recursion_limit": RECURSION_LIMIT,
+            },
+        )
+    with st.chat_message("assistant"):
+        st.session_state.llm_multi_agent_messages.append( {"role": "assistant", "content": str(steps[-1])})
+        logger.info(f"\nstep{i}:{str(steps[-1])}")
+
+    for i, step in reversed(enumerate(steps)):
+        logger.debug(f"\nstep{i}:{str(step)}")
 # #### Multi-hop question
 #
 # This question requires that the agent perform multiple searches.

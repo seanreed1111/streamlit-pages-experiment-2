@@ -1,3 +1,5 @@
 config/
 *.json
 deployment.yaml
+.llm-compiler-local
+llm-compiler-local
