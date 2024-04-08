@@ -4,7 +4,6 @@ import urllib
 from pathlib import Path
 
 import streamlit as st
-import tiktoken
 from langchain_community.utilities.sql_database import SQLDatabase
 from loguru import logger
 

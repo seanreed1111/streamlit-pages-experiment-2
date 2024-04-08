@@ -4,12 +4,12 @@ from typing import List, Optional
 
 import numexpr
 from langchain.chains.openai_functions import create_structured_output_runnable
-from langchain_community.chat_models import ChatOpenAI
 from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import StructuredTool
+from langchain_openai import AzureChatOpenAI
 
 _MATH_DESCRIPTION = (
     "math(problem: str, context: Optional[list[str]]) -> float:\n"
@@ -106,7 +106,9 @@ def _evaluate_expression(expression: str) -> str:
     return re.sub(r"^\[|\]$", "", output)
 
 
-def get_math_tool(llm: ChatOpenAI):
+
+
+def get_math_tool(llm: AzureChatOpenAI):
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", _SYSTEM_PROMPT),

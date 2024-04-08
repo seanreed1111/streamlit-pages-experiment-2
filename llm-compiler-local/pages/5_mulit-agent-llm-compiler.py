@@ -24,6 +24,7 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Sequence, Tuple, Union
 
+import streamlit as st
 from langchain import hub
 from langchain.chains.openai_functions import create_structured_output_runnable
 from langchain_community.tools.tavily_search import TavilySearchResults
@@ -48,13 +49,15 @@ from langchain_core.tools import BaseTool  # , tool
 from langchain_openai import AzureChatOpenAI
 from langgraph.graph import END, MessageGraph
 from loguru import logger
-if "src" not in sys.path:
+
+if "llm-compiler-local/src" not in sys.path:
     sys.path.append("../src")  # needed to get the azure config imports to run
 
 from src.math_tools import get_math_tool
 from src.output_parser import LLMCompilerPlanParser, Task
 from typing_extensions import TypedDict
-RECURSION_LIMIT = 10
+
+RECURSION_LIMIT = 5
 
 if "config_dir_path" not in st.session_state:
     st.info("please ensure that you've completed loading the main (app) page")
@@ -106,7 +109,7 @@ with st.sidebar:
     )
 
 os.environ["LANGCHAIN_PROJECT"] = (
-    f"{Path(__file__).stem}-using-{model_name}"
+    f"{Path(__file__).stem}-using-{st.session_state['multi_agent_model_name']}"
 )
 
 with st.sidebar:
@@ -143,7 +146,7 @@ with st.spinner("Setting up multi-agent...please wait"):
 # Initialize tools
 calculate = get_math_tool(llm)
 search = TavilySearchResults(
-    max_results=4,
+    max_results=3,
     description='tavily_search_results_json(query="the search query") - a search engine.',
 )
 
@@ -165,7 +168,7 @@ tools = [search, calculate]
 # These are used to route tool (task) outputs to other tools.
 
 prompt = hub.pull("wfh/llm-compiler")
-logger.info(f"\nHere is the llm-compiler prompt {str(prompt)}\n")
+# logger.info(f"\nHere is the llm-compiler prompt {str(prompt)}\n")
 
 @logger.catch
 def create_planner(
@@ -402,7 +405,7 @@ def plan_and_schedule(messages: List[BaseMessage], config):
     return scheduled_tasks
 
 
-tool_messages = plan_and_schedule.invoke([HumanMessage(content=example_question)])
+# tool_messages = plan_and_schedule.invoke([HumanMessage(content=example_question)])
 
 # ## "Joiner"
 #
@@ -471,10 +474,10 @@ def select_recent_messages(messages: list) -> dict:
 
 joiner = select_recent_messages | runnable | _parse_joiner_output
 
-input_messages = [HumanMessage(content=example_question)] + tool_messages
+# input_messages = [HumanMessage(content=example_question)] + tool_messages
 
 
-joiner.invoke(input_messages)
+# joiner.invoke(input_messages)
 
 
 # ## Compose using LangGraph
@@ -516,10 +519,10 @@ chain = graph_builder.compile()
 if (
     "llm_multi_agent_messages" not in st.session_state
     or st.button("Clear message history")
-    or not st.session_state.llm_python_agent_messages
+    or not st.session_state.llm_multi_agent_messages
 ):
     if st.session_state["uploaded_file_exists"]:
-        initial_content = f"How can I help you with the file you uploaded?"
+        initial_content = "How can I help you with the file you uploaded?"
 
     else:
         initial_content = "How can I help you?"
@@ -545,68 +548,19 @@ if user_input := st.chat_input():
         {"role": "user", "content": user_input}
     )
     st.chat_message("user").write(user_input)
-    with st.spinner():
-        steps = chain.stream(
-            [
-                HumanMessage(content=user_input)
-            ],
-            {
-                "recursion_limit": RECURSION_LIMIT,
-            },
-        )
-    with st.chat_message("assistant"):
-        st.session_state.llm_multi_agent_messages.append( {"role": "assistant", "content": str(steps[-1])})
-        logger.info(f"\nstep{i}:{str(steps[-1])}")
 
-    for i, step in reversed(enumerate(steps)):
-        logger.debug(f"\nstep{i}:{str(step)}")
-# #### Multi-hop question
-#
-# This question requires that the agent perform multiple searches.
+    steps = chain.stream(
+        [
+            HumanMessage(content=user_input)
+        ],
+        {
+            "recursion_limit": RECURSION_LIMIT,
+        },
+    )
+    output = {}
+    for i, step in enumerate(steps):
+        output[i] = step
+    logger.info(f"\noutput={str(output)}")
+    st.session_state.llm_multi_agent_messages.append( {"role": "assistant", "content": output})
+    st.chat_message("assistant").write(output)
 
-# steps = chain.stream(
-#     [
-#         HumanMessage(
-#             content="Who is the oldest person alive? and how much older is that person than the average human lifespan \
-#                 in the country where they were born ?"
-#         )
-#     ],
-#     {
-#         "recursion_limit": RECURSION_LIMIT,
-#     },
-# )
-# for i, step in enumerate(steps):
-#     print(i, step)
-#     print("---")
-
-
-# # Next Question
-# for i,step in enumerate(chain.stream(
-#     [
-#         HumanMessage(
-#             content="What's (3*3245) + 8? What's 32/4.23? What's the sum of those two values?"
-#         )
-#     ],
-#     {
-#         "recursion_limit": RECURSION_LIMIT,
-#     },
-# )):
-#     # print(f"\nstep{i}:{str(step)}")
-#     print("---")
-#     logger.info(f"\nstep{i}:{str(step)}")
-
-
-# ## Conclusion
-#
-# Congrats on building your first LLMCompiler agent!
-# I'll leave you with some known limitations to the implementation above:
-#
-"""
-# 1. The planner output parsing format is fragile if your function requires more than 1 or 2 arguments. 
-    # We could make it more robust by using streaming tool calling.
-# 2. Variable substitution is fragile in the example above. 
-    # It could be made more robust by using a fine-tuned model 
-    # and a more robust syntax (using e.g., Lark or a tool calling schema)
-# 3. The state can grow quite long if you require multiple re-planning runs. 
-    # To handle, you could add a message compressor once you go above a certain token limit.
-"""
