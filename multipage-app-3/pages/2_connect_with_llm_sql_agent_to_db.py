@@ -1,7 +1,7 @@
 # reference docs https://python.langchain.com/docs/integrations/toolkits/sql_database#use-sqldatabasetoolkit-within-an-agenthttps://python.langchain.com/docs/expression_language/cookbook/sql_db
 
 # https://python.langchain.com/docs/expression_language/cookbook/sql_db
-# import json
+import json
 import os
 import sys
 
@@ -61,67 +61,47 @@ LANGCHAIN_PROJECT = "Multipage App #3 Chat With SQL Agent WAB DB"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 
-sample_system_prompt = """
-You are a MSSQL agent designed to interact with the user and generate SQL scripts based on their requirements.
- 
-INSTRUCTIONS:
+# sample_system_prompt = """
+# You are a MSSQL agent designed to interact with the user.
+# When crafting SQL queries, aim to include data elements that are human-readable.
+# For instance, rather than returning only a customer ID, include the customer name as well. This enhances the understandability of the results.
 
-- Request the user to provide some sample SQL scripts that are specific to their database or application, if none is included in the prompt. These will help guide the generation of SQL scripts that meet the user requirements.
-- Ask the user to specify their question or requirement.
-- Generate a SQL script that aligns with the user's question and the provided SQL schema.
-- During the interaction with the user if it appears the requests are very complex and you are unable to generate appropriate SQL scripts, then you can request the user to provide additional sample queries that may help you understand the inter relationships of the tables better.
- 
-Remember, the database you are working with a schema named 'trg'. It's a snapshot of a real dataset and does not track changes over time. If a user's question implies tracking data over time, gently remind them of this limitation.
- 
-When crafting SQL queries, aim to include data elements that are human-readable. 
-For instance, rather than returning only a customer ID, include the customer name as well. This enhances the understandability of the results.
- 
-In this schema, 'party' refers to the customer.
- 
-Here are two example SQL queries for your reference:
- 
-To find deposit values:
-SELECT SUM(DP_CUR_BAL) AS Total_Deposit_Value
-FROM trg.DEPOSIT;
+# In this schema, 'party' refers to the customer.
+
+# Here are two example SQL queries for your reference:
+
+# Example #1
+# If the user asks you to find deposit values:
+
+# Perform the query
+# <<<SELECT SUM(DP_CUR_BAL) AS Total_Deposit_Value
+# FROM trg.DEPOSIT;>>>
+
+# Example #2
+# If you need to join three tables: trg.PARTY, trg.PARTY_ACCOUNT, and trg.DEPOSIT:
+# SELECT
+#     p.PRTY_ID AS Customer_ID,
+#     CASE
+#         WHEN p.PRTY_NM IS NOT NULL THEN p.PRTY_NM
+#         ELSE p.FRST_NM + ' ' + ISNULL(p.MDLE_NM, '') + ' ' + p.LST_NM
+#     END AS Customer_Name,
+#     SUM(d.DP_CUR_BAL) AS Total_Deposit_Value
+# FROM
+#     trg.PARTY p
+# JOIN
+#     trg.PARTY_ACCOUNT pa ON p.PRTY_ID = pa.PRTY_ID
+# JOIN
+#     trg.DEPOSIT d ON pa.ACCT_ID = d.ACCT_ID
+# GROUP BY
+#     p.PRTY_ID,
+#     p.PRTY_NM,
+#     p.FRST_NM,
+#     p.MDLE_NM,
+#     p.LST_NM;
 
 
-To join three tables: PARTY, PARTY_ACCOUNT, and DEPOSIT:
-SELECT 
-    p.PRTY_ID AS Customer_ID,
-    CASE 
-        WHEN p.PRTY_NM IS NOT NULL THEN p.PRTY_NM
-        ELSE p.FRST_NM + ' ' + ISNULL(p.MDLE_NM, '') + ' ' + p.LST_NM
-    END AS Customer_Name,
-    SUM(d.DP_CUR_BAL) AS Total_Deposit_Value
-FROM 
-    trg.PARTY p
-JOIN 
-    trg.PARTY_ACCOUNT pa ON p.PRTY_ID = pa.PRTY_ID
-JOIN 
-    trg.DEPOSIT d ON pa.ACCT_ID = d.ACCT_ID
-GROUP BY 
-    p.PRTY_ID,
-    p.PRTY_NM,
-    p.FRST_NM,
-    p.MDLE_NM,
-    p.LST_NM;
- 
-
-PROCESSING STEPS:
-1.0 When asked to perform complex tasks, you must first plan and then reflect on the steps. 
-2.0 If DISPLAY_INTERMEDIATE i set to YES, then display intermediate steps to keep the user informed about the actions being taken. If this flag is not set to YES, then DO NOT display the intermediate steps.
-3.0 For queries that may yield large responses, ask the user to input the number of records to return. This could range from a few records to a larger sample, but not necessarily all records.
-4.0 Ensure the user has the ability to stop the query generation and execution process if they wish. This could be based on a timeout value.
- 
-The basic interactions may be something like this:
-Question: <User's question> 
-Understand Question: <Your understanding of the question> 
-Intermediate step 1: <Identify tables to be used or other steps> 
-Intermediate step 2: <Identify columns in the tables to be used or additional, lower level steps> 
-SQL Query: <Final SQL query>
- 
-Remember: At start up after providing all the info about how this works, clearly instruct the user what to do next. Even when there are lot of instructions, the next step should be very clear to the user
-"""
+# When asked to perform multistep or complex tasks, you must first plan and then reflect on the steps.
+# """
 with st.sidebar:
     llm_choice_radio = st.radio("Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"])
     if llm_choice_radio == "GPT-3.5-turbo":
@@ -147,8 +127,18 @@ with st.spinner("Setting up agent...please wait"):
         st.error("Please go back to main app page and connect to the WAB database")
         st.stop()
 
+    TEMPERATURE = 0.05
+
+    llm_config = {
+        "llm-temperature": TEMPERATURE,
+        "request_timeout": 120,
+        "verbose": True,
+        "model_name": st.session_state["agent_model_name"],
+    }
+
+    logger.info(f"\nllm-config = {json.dumps(llm_config)}")
     llm = AzureChatOpenAI(
-        temperature=0.2,
+        temperature=TEMPERATURE,
         streaming=True,
         azure_deployment=st.session_state["agent_deployment_name"],
         azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
@@ -166,7 +156,6 @@ with st.spinner("Setting up agent...please wait"):
         verbose=True,
         agent_type="openai-tools",
         max_iterations=15,
-        handle_parsing_errors=True,
         agent_executor_kwargs={"return_intermediate_steps": True},
     )
     st.success("Agent setup done!")
@@ -177,8 +166,7 @@ if (
     or not st.session_state.llm_sql_agent_messages
 ):
     st.session_state["llm_sql_agent_messages"] = [
-        {"role": "system", "content": sample_system_prompt},
-        {"role": "assistant", "content": "How can I help you?"},
+        {"role": "assistant", "content": "How can I help you?"}
     ]
 
 for msg in st.session_state.llm_sql_agent_messages:

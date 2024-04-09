@@ -10,14 +10,12 @@
 # 3. Joiner: Responds to the user or triggers a second plan
 #
 #
-#
-import datetime
+import datetime  # noqa: F401
 import itertools
 import json
 import os
 import re
 import sys
-import tempfile
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor, wait
@@ -26,8 +24,12 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple, Union
 
 import streamlit as st
 from langchain import hub
+from langchain.agents import (
+    AgentExecutor,
+    create_openai_functions_agent,
+)
 from langchain.chains.openai_functions import create_structured_output_runnable
-from langchain_community.tools.tavily_search import TavilySearchResults
+# from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import (
     AIMessage,
@@ -35,7 +37,7 @@ from langchain_core.messages import (
     FunctionMessage,
     HumanMessage,
     SystemMessage,
-    ToolMessage,
+    # ToolMessage,
 )
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
@@ -44,6 +46,8 @@ from langchain_core.runnables import (
     chain as as_runnable,
 )
 from langchain_core.tools import BaseTool  # , tool
+from langchain_experimental.agents.agent_toolkits import create_csv_agent
+from langchain_experimental.tools import PythonREPLTool
 
 # from langchain_core.utils.function_calling import convert_to_openai_tool
 from langchain_openai import AzureChatOpenAI
@@ -57,14 +61,15 @@ from src.math_tools import get_math_tool
 from src.output_parser import LLMCompilerPlanParser, Task
 from typing_extensions import TypedDict
 
-RECURSION_LIMIT = 5
+RECURSION_LIMIT = 20
 
 if "config_dir_path" not in st.session_state:
     st.info("please ensure that you've completed loading the main (app) page")
     st.stop()
 
+
 def logger_setup():
-    log_dir = Path.home() / "PythonProjects" / "logs"
+    log_dir = Path.home() / "PythonProjects" / "llm-compiler-local" / "logs"
     log_dir.mkdir(exist_ok=True, parents=True)
     log_file_name = Path(__file__).stem + ".log"
     log_file_path = log_dir / log_file_name
@@ -87,6 +92,7 @@ def logger_setup():
         diagnose=True,
     )
 
+
 logger_setup()
 
 with st.sidebar:
@@ -104,12 +110,10 @@ with st.sidebar:
         st.session_state["multi_agent_deployment_name"] = os.getenv(
             "AZURE_OPENAI_API_DEPLOYMENT_NAME"
         )
-    st.info(
-        f"Now using {llm_choice_radio_multi_agent} as the underlying llm."
-    )
+    st.info(f"Now using {llm_choice_radio_multi_agent} as the underlying llm.")
 
 os.environ["LANGCHAIN_PROJECT"] = (
-    f"{Path(__file__).stem}-using-{st.session_state['multi_agent_model_name']}"
+    f"{Path(__file__).stem}v2-using-{st.session_state['multi_agent_model_name']}"
 )
 
 with st.sidebar:
@@ -145,16 +149,57 @@ with st.spinner("Setting up multi-agent...please wait"):
 
 # Initialize tools
 calculate = get_math_tool(llm)
-search = TavilySearchResults(
-    max_results=3,
-    description='tavily_search_results_json(query="the search query") - a search engine.',
-)
 
-tools = [search, calculate]
+
+# search = TavilySearchResults(
+#     max_results=8,
+#     description='tavily_search_results_json(query="the search query") - a search engine.',
+# )
+def get_python_agent_executor(llm):
+    tools = [PythonREPLTool()]
+    instructions = """You are an agent designed to write and execute python code to answer questions.
+    You have access to a python REPL, which you can use to execute python code.
+    If you get an error, debug your code and try again.
+    Only use the output of your code to answer the question. 
+    You might know the answer without running any code, but you should still run the code to get the answer.
+    If you are asked to write code, return only the code with no additional text or tests.
+    If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
+    """
+    base_prompt = hub.pull("langchain-ai/openai-functions-template")
+    logger.info(f"{base_prompt=}")
+    prompt = base_prompt.partial(instructions=instructions)
+    logger.info("prompt from hub is:" + str(prompt))
+    agent = create_openai_functions_agent(llm, tools, prompt)
+    return AgentExecutor(
+        agent=agent,
+        tools=tools,
+        max_execution_time=100,
+        max_iterations=10,
+        return_intermediate_steps=True,
+        handle_parsing_errors=True,
+        memory=None,  # setup memory
+        verbose=True,
+    )
+
+
+def get_csv_agent_executor(llm, file):
+    return create_csv_agent(
+        llm,
+        file,
+        verbose=True,
+        agent_type="openai-tools",
+        max_iterations=10,
+        return_intermediate_steps=True,
+        # handle_parsing_errors=True,
+        max_execution_time=100,
+    )
+
+
+tools = [calculate, PythonREPLTool()]
 
 # Planner
-# The code below composes constructs the prompt template for the planner and composes it 
-# with LLM and output parser, defined in [output_parser.py](./output_parser.py). 
+# The code below composes constructs the prompt template for the planner and composes it
+# with LLM and output parser, defined in [output_parser.py](./output_parser.py).
 # The output parser processes a task list in the following form:
 #
 # ```plaintext
@@ -164,25 +209,23 @@ tools = [search, calculate]
 # 3. join()<END_OF_PLAN>"
 # ```
 #
-# The "Thought" lines are optional. The `${#}` placeholders are variables. 
+# The "Thought" lines are optional. The `${#}` placeholders are variables.
 # These are used to route tool (task) outputs to other tools.
 
 prompt = hub.pull("wfh/llm-compiler")
 # logger.info(f"\nHere is the llm-compiler prompt {str(prompt)}\n")
+
 
 @logger.catch
 def create_planner(
     llm: BaseChatModel, tools: Sequence[BaseTool], base_prompt: ChatPromptTemplate
 ):
     tool_descriptions = "\n".join(
-        f"{i+1}. {included_tool.description}\n"
-        for i, included_tool in enumerate(
-            tools
-        )
+        f"{i+1}. {included_tool.description}\n" for i, included_tool in enumerate(tools)
     )
     planner_prompt = base_prompt.partial(
         replan="",
-        num_tools=len(tools)+ 1,  # +1 is for the join() tool.
+        num_tools=len(tools) + 1,  # +1 is for the join() tool.
         tool_descriptions=tool_descriptions,
     )
     replanner_prompt = base_prompt.partial(
@@ -230,6 +273,7 @@ planner = create_planner(llm, tools, prompt)
 # for task in planner.stream([HumanMessage(content=example_question)]):
 #     print(task["tool"], task["args"])
 #     print("---")
+
 
 @logger.catch
 def _get_observations(messages: List[BaseMessage]) -> Dict[int, Any]:
@@ -414,7 +458,7 @@ def plan_and_schedule(messages: List[BaseMessage], config):
 # 1. Respond with the correct answer.
 # 2. Loop with a new plan.
 #
-# The paper refers to this as the "joiner". It's another LLM call. 
+# The paper refers to this as the "joiner". It's another LLM call.
 # We are using function calling to improve parsing reliability.
 
 
@@ -448,6 +492,7 @@ runnable = create_structured_output_runnable(JoinOutputs, llm, joiner_prompt)
 
 # We will select only the most recent messages in the state, and format the output to be more useful for
 # the planner, should the agent need to loop.
+
 
 @logger.catch
 def _parse_joiner_output(decision: JoinOutputs) -> List[BaseMessage]:
@@ -509,13 +554,13 @@ chain = graph_builder.compile()
 
 
 # #### Multi-hop question
-    # [
-    #     HumanMessage(
-    #         content="What was the GDP of Australia in 2020 in in Billions of US Dollars? \
-    #  What was the GDP of Iceland in 2020 in Billions of US Dollars? Which has the larger GDP? \
-    #     What is the sum of the GDPs, in Billions of US Dollars"
-    #     )
-    # ],
+# [
+#     HumanMessage(
+#         content="What was the GDP of Australia in 2020 in in Billions of US Dollars? \
+#  What was the GDP of Iceland in 2020 in Billions of US Dollars? Which has the larger GDP? \
+#     What is the sum of the GDPs, in Billions of US Dollars"
+#     )
+# ],
 if (
     "llm_multi_agent_messages" not in st.session_state
     or st.button("Clear message history")
@@ -550,9 +595,7 @@ if user_input := st.chat_input():
     st.chat_message("user").write(user_input)
 
     steps = chain.stream(
-        [
-            HumanMessage(content=user_input)
-        ],
+        [HumanMessage(content=user_input)],
         {
             "recursion_limit": RECURSION_LIMIT,
         },
@@ -561,6 +604,7 @@ if user_input := st.chat_input():
     for i, step in enumerate(steps):
         output[i] = step
     logger.info(f"\noutput={str(output)}")
-    st.session_state.llm_multi_agent_messages.append( {"role": "assistant", "content": output})
+    st.session_state.llm_multi_agent_messages.append(
+        {"role": "assistant", "content": output}
+    )
     st.chat_message("assistant").write(output)
-
