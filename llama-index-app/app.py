@@ -22,7 +22,7 @@ with st.spinner("performing Azure configuration... please wait"):
         st.session_state["config_dir_path"] = Path.cwd() / "config"
 
     def run_azure_config(config_dir):
-        all_config_file_path = config_dir / "allconfig.json"
+        all_config_file_path = config_dir / "allconfig_llama_index.json"
         config = {}
         with open(all_config_file_path) as json_config:
             config.update(json.load(json_config))
