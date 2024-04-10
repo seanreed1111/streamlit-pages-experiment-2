@@ -14,26 +14,25 @@ st.markdown(f"### {LANGCHAIN_PROJECT}")
 
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
-USETRG = True
-SCHEMA = {"schema": "trg"} if USETRG else {"schema": "sandbox"}
+SCHEMA = {"schema": "trg"}
+CONFIG_DIR_PATH = Path.cwd() / "config"
+DB_CONFIG_FILE = "db_config_llama_index.json"
+AZURE_CONFIG_FILE= "azure_config_llama_index.json"
 
-with st.spinner("performing Azure configuration... please wait"):
-    if "config_dir_path" not in st.session_state:
-        st.session_state["config_dir_path"] = Path.cwd() / "config"
+def run_azure_config(config_dir_path, azure_config_file):
+    azure_config_file_path = config_dir_path / azure_config_file
+    config = {}
+    with open(azure_config_file_path) as json_config:
+        config.update(json.load(json_config))
+        for k in config:
+            os.environ[k] = config[k]
 
-    def run_azure_config(config_dir):
-        all_config_file_path = config_dir / "allconfig_llama_index.json"
-        config = {}
-        with open(all_config_file_path) as json_config:
-            config.update(json.load(json_config))
-            for k in config:
-                os.environ[k] = config[k]
-
-    if "run_azure_config" not in st.session_state:
-        run_azure_config(st.session_state["config_dir_path"])
+if "run_azure_config" not in st.session_state:
+    with st.spinner("performing Azure configuration... please wait"):
+        if "config_dir_path" not in st.session_state:
+            st.session_state["config_dir_path"] = CONFIG_DIR_PATH
+        run_azure_config(CONFIG_DIR_PATH, AZURE_CONFIG_FILE)
         st.session_state["run_azure_config"] = True
-
-    if st.session_state["run_azure_config"]:
         st.success("Azure Configuration... done.")
 
 
@@ -47,7 +46,21 @@ if "llm_sql_agent_messages" not in st.session_state:
 if "llm_python_agent_messages" not in st.session_state:
     st.session_state["llm_python_agent_messages"] = []
 
-def get_wab_connection_string(db_config_file, config_dir_path):
+
+
+from llama_index.core import SQLDatabase
+from sqlalchemy import (
+    create_engine,
+    MetaData,
+    Table,
+    Column,
+    String,
+    Integer,
+    select,
+    column,
+)
+
+def get_connection_string(config_dir_path, db_config_file):
     driver = "{ODBC Driver 18 for SQL Server}"
     db_config_path = config_dir_path / db_config_file
 
@@ -66,40 +79,32 @@ def get_wab_connection_string(db_config_file, config_dir_path):
     )
     return sqlalchemy_connection_string
 
-with st.sidebar:
-    db_connection_radio = st.radio(
-        "Choose one", ["No DB Connection Needed", "Connect to WAB DB"]
-    )
-    if db_connection_radio == "Connect to WAB DB" and "db" not in st.session_state:
-        with st.spinner(
-            "performing database configuration and connecting... please wait"
-        ):
+db_connection_radio = st.radio(
+    "Choose one", ["No DB Connection Needed", "Connect to WAB DB"]
+)
+if db_connection_radio == "Connect to WAB DB" and "db" not in st.session_state:
+    with st.spinner(
+        "performing database configuration and connecting... please wait"
+    ):
 
-            @st.cache_resource(ttl="2h")
-            def get_db_engine(db_config_file, config_dir_path, **kwargs):
-                return SQLDatabase.from_uri(
-                    database_uri=get_wab_connection_string(
-                        db_config_file, config_dir_path
-                    ),
-                    **kwargs,
+        test_query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;"
+        try:
+            sqlalchemy_connection_string = (
+                get_connection_string(
+                config_dir_path=st.session_state["config_dir_path"], 
+                db_config_file=DB_CONFIG_FILE
                 )
+            )
+            engine = create_engine(sqlalchemy_connection_string)
+            db = SQLDatabase(engine, **SCHEMA ) #SCHEMA????
+            # db.run_sql(test_query) ### HOW DO YOU RUN A QUERY???
+            st.session_state["db"] = db
+            st.success("Sucessfully created the database")
+            st.info("Please select a app to use from the sidebar.")
+            # logger.info("DB test query completed successfully")
+        except Exception as e:
+            st.warning("Database connection failed!")
+            st.error(e)
+            logger.error(str(e))
 
-            # connect and test
-            test_query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;"
-            try:
-                db = get_db_engine(
-                    db_config_file="dbconfig.json",
-                    config_dir_path=st.session_state["config_dir_path"],
-                    **SCHEMA,
-                )
-                logger.info("DB connection established! Testing connection with query")
-                db.run(test_query)
-                st.session_state["db"] = db
-                st.success("Sucessfully connected to the database")
-                logger.info("DB test query completed successfully")
-            except Exception as e:
-                st.warning("Database connection failed!")
-                st.error(e)
-                logger.error(str(e))
-
-    st.info("Please select a app to use from the sidebar.")
+    

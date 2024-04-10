@@ -65,9 +65,6 @@ llm = AzureOpenAI(
     request_timeout=45,
     verbose=True)
 
-def clear_chat_history():
-    st.session_state.chat_history = []
-
 clear_chat_history = st.button("Clear Chat History")
 
 
@@ -83,10 +80,8 @@ if prompt := st.chat_input():
     st.session_state.messages.append(ChatMessage(role="user", content=prompt))
     st.chat_message("user").write(prompt)
     response = llm.chat(st.session_state.messages)
-    # logger.debug(f"\n\n{response=}\n")
     st.session_state.messages.append(
         ChatMessage(role="assistant", content=response.message.content)
         )
     with st.chat_message("assistant"):
         st.write(response.message.content)
-    # logger.info("response: " + str(response))
