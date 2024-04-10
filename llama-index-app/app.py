@@ -33,7 +33,7 @@ if "run_azure_config" not in st.session_state:
             st.session_state["config_dir_path"] = CONFIG_DIR_PATH
         run_azure_config(CONFIG_DIR_PATH, AZURE_CONFIG_FILE)
         st.session_state["run_azure_config"] = True
-        st.success("Azure Configuration... done.")
+        st.success("Azure configuration... done.")
 
 
 # establish chat messages for each page and add to session state

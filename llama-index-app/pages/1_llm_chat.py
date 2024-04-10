@@ -2,9 +2,10 @@ import json
 import os
 import sys
 from pathlib import Path
+
 import streamlit as st
-from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.core.llms import ChatMessage
+from llama_index.llms.azure_openai import AzureOpenAI
 from loguru import logger
 
 LANGCHAIN_PROJECT = "Llama-index Chat with LLM"
@@ -14,19 +15,16 @@ with st.sidebar:
     llm_choice_radio = st.radio("Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"])
     if llm_choice_radio == "GPT-3.5-turbo":
         st.session_state["llm_chat_model_name"] = os.getenv("MODEL_GPT35")
-        st.session_state["llm_chat_engine"] = os.getenv(
-            "ENGINE_GPT35"
-        )
+        st.session_state["llm_chat_engine"] = os.getenv("ENGINE_GPT35")
     elif llm_choice_radio == "GPT-4-turbo":
         st.session_state["llm_chat_model_name"] = os.getenv("MODEL_GPT4")
-        st.session_state["llm_chat_engine"] = os.getenv(
-            "ENGINE_GPT4"
-        )
+        st.session_state["llm_chat_engine"] = os.getenv("ENGINE_GPT4")
     st.info(
         f"Now using {llm_choice_radio} as the underlying llm for chat on this page."
     )
 
 os.environ["LANGCHAIN_PROJECT"] = f"{LANGCHAIN_PROJECT} with {llm_choice_radio}"
+
 
 def logger_setup():
     log_dir = Path.home() / "logs" / "llama-index-app"
@@ -52,6 +50,7 @@ def logger_setup():
         diagnose=True,
     )
 
+
 logger_setup()
 logger.info(f"Project:{os.environ['LANGCHAIN_PROJECT']}")
 
@@ -62,9 +61,12 @@ llm = AzureOpenAI(
     model_name=st.session_state["llm_chat_model_name"],
     azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
     openai_api_version=os.environ["OPENAI_API_VERSION"],
-    request_timeout=45,
-    verbose=True)
+    api_key=os.environ["AZURE_OPENAI_API_KEY"],
+    request_timeout=200,
+    verbose=True,
+)
 
+st.session_state["llm"] = llm
 clear_chat_history = st.button("Clear Chat History")
 
 
@@ -82,6 +84,6 @@ if prompt := st.chat_input():
     response = llm.chat(st.session_state.messages)
     st.session_state.messages.append(
         ChatMessage(role="assistant", content=response.message.content)
-        )
+    )
     with st.chat_message("assistant"):
         st.write(response.message.content)

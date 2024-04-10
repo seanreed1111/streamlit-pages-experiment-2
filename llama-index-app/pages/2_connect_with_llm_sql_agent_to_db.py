@@ -5,42 +5,41 @@ import json
 import os
 import sys
 from pathlib import Path
-from llama_index.llms.azure_openai import AzureOpenAI
-from llama_index.core.llms import ChatMessage
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
+
 import streamlit as st
-from loguru import logger
-# define global callback setting
-from llama_index.core.settings import Settings
-from llama_index.core.callbacks import CallbackManager
+from llama_index.core.agent import (
+    AgentChatResponse,
+    AgentRunner,
+    QueryPipelineAgentWorker,
+    ReActChatFormatter,
+    Task,
+)
+from llama_index.core.agent.react.output_parser import ReActOutputParser
 from llama_index.core.agent.react.types import (
     ActionReasoningStep,
     ObservationReasoningStep,
     ResponseReasoningStep,
 )
-from llama_index.core.agent import Task, AgentChatResponse
+from llama_index.core.callbacks import CallbackManager
+from llama_index.core.llms import ChatMessage, ChatResponse, MessageRole
+from llama_index.core.query_engine import NLSQLTableQueryEngine
 from llama_index.core.query_pipeline import (
-    AgentInputComponent,
     AgentFnComponent,
+    AgentInputComponent,
     CustomAgentComponent,
+    InputComponent,
+    Link,
     QueryComponent,
     ToolRunnerComponent,
 )
-
-from llama_index.core.agent import QueryPipelineAgentWorker, AgentRunner
-from llama_index.core.callbacks import CallbackManager
-from llama_index.core.llms import MessageRole
-from typing import Dict, Any, Optional, Tuple, List, cast
-from llama_index.core.agent import ReActChatFormatter
-from llama_index.core.query_pipeline import InputComponent, Link
-from llama_index.core.llms import ChatMessage
-from llama_index.core.tools import BaseTool
-from typing import Set, Optional
-from llama_index.core.agent.react.output_parser import ReActOutputParser
-from llama_index.core.llms import ChatResponse
-from llama_index.core.agent.types import Task
-
-callback_manager = CallbackManager()
-Settings.callback_manager = callback_manager
+from llama_index.core.query_pipeline import QueryPipeline as QP
+from llama_index.core.settings import Settings
+from llama_index.core.tools import BaseTool, QueryEngineTool
+# from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.azure_openai import AzureOpenAI
+from loguru import logger
 
 LANGCHAIN_PROJECT = "Llama-index Chat with SQL Agent"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
@@ -50,19 +49,16 @@ with st.sidebar:
     llm_choice_radio = st.radio("Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"])
     if llm_choice_radio == "GPT-3.5-turbo":
         st.session_state["llm_chat_model_name"] = os.getenv("MODEL_GPT35")
-        st.session_state["llm_chat_engine"] = os.getenv(
-            "ENGINE_GPT35"
-        )
+        st.session_state["llm_chat_engine"] = os.getenv("ENGINE_GPT35")
     elif llm_choice_radio == "GPT-4-turbo":
         st.session_state["llm_chat_model_name"] = os.getenv("MODEL_GPT4")
-        st.session_state["llm_chat_engine"] = os.getenv(
-            "ENGINE_GPT4"
-        )
+        st.session_state["llm_chat_engine"] = os.getenv("ENGINE_GPT4")
     st.info(
-        f"Now using {llm_choice_radio} as the underlying llm for chat on this page."
+        f"Now using {llm_choice_radio} as the underlying llm on this page."
     )
 
 os.environ["LANGCHAIN_PROJECT"] = f"{LANGCHAIN_PROJECT} with {llm_choice_radio}"
+
 
 def logger_setup():
     log_dir = Path.home() / "logs" / "llama-index-app"
@@ -88,16 +84,39 @@ def logger_setup():
         diagnose=True,
     )
 
+
 logger_setup()
 logger.info(f"Project:{os.environ['LANGCHAIN_PROJECT']}")
 if "db" not in st.session_state:
     st.info("Please go back to main page and connect to the database")
     st.stop()
 
+llm = AzureOpenAI(
+    temperature=0,
+    streaming=True,
+    azure_deployment=st.session_state["llm_chat_engine"],
+    model_name=st.session_state["llm_chat_model_name"],
+    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+    openai_api_version=os.environ["OPENAI_API_VERSION"],
+    api_key=os.environ["AZURE_OPENAI_API_KEY"],
+    request_timeout=100,
+    verbose=True,
+)
+embed_model = OpenAIEmbedding(
+    model=os.environ["OPENAI_EMBEDDING_MODEL_NAME"],
+    deployment_name=os.environ["OPENAI_EMBEDDING_DEPLOYMENT_NAME"],
+    api_key=os.environ["AZURE_OPENAI_API_KEY"],
+    api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
+    api_version="2022-12-01",
+    api_type = "azure"
+)
+# define global callback setting
+callback_manager = CallbackManager()
+Settings.callback_manager = callback_manager
+Settings.llm = llm
+Settings.embed_model = embed_model
 
-from llama_index.core.query_engine import NLSQLTableQueryEngine
-from llama_index.core.tools import QueryEngineTool
-sql_database = st.session_state['db']
+sql_database = st.session_state["db"]
 
 sql_query_engine = NLSQLTableQueryEngine(
     sql_database=sql_database,
@@ -107,16 +126,14 @@ sql_query_engine = NLSQLTableQueryEngine(
 sql_tool = QueryEngineTool.from_defaults(
     query_engine=sql_query_engine,
     name="sql_tool",
-    description=(
-        "Useful for translating a natural language query into a SQL query"
-    ),
+    description=("Useful for translating a natural language query into a SQL query"),
 )
-from llama_index.core.query_pipeline import QueryPipeline as QP
 
 
 ## Agent Input Component
 ## This is the component that produces agent inputs to the rest of the components
 ## Can also put initialization logic here.
+
 
 def agent_input_fn(task: Task, state: Dict[str, Any]) -> Dict[str, Any]:
     """Agent input function.
@@ -133,6 +150,7 @@ def agent_input_fn(task: Task, state: Dict[str, Any]) -> Dict[str, Any]:
     reasoning_step = ObservationReasoningStep(observation=task.input)
     state["current_reasoning"].append(reasoning_step)
     return {"input": task.input}
+
 
 ## define prompt function
 def react_prompt_fn(
@@ -155,9 +173,8 @@ def parse_react_output_fn(
     reasoning_step = output_parser.parse(chat_response.message.content)
     return {"done": reasoning_step.is_done, "reasoning_step": reasoning_step}
 
-def run_tool_fn(
-    task: Task, state: Dict[str, Any], reasoning_step: ActionReasoningStep
-):
+
+def run_tool_fn(task: Task, state: Dict[str, Any], reasoning_step: ActionReasoningStep):
     """Run tool and process tool output."""
     tool_runner_component = ToolRunnerComponent(
         [sql_tool], callback_manager=task.callback_manager
@@ -172,6 +189,7 @@ def run_tool_fn(
 
     return {"response_str": observation_step.get_content(), "is_done": False}
 
+
 def process_response_fn(
     task: Task, state: Dict[str, Any], response_step: ResponseReasoningStep
 ):
@@ -180,40 +198,19 @@ def process_response_fn(
     response_str = response_step.response
     # Now that we're done with this step, put into memory
     state["memory"].put(ChatMessage(content=task.input, role=MessageRole.USER))
-    state["memory"].put(
-        ChatMessage(content=response_str, role=MessageRole.ASSISTANT)
-    )
+    state["memory"].put(ChatMessage(content=response_str, role=MessageRole.ASSISTANT))
 
     return {"response_str": response_str, "is_done": True}
 
-def process_agent_response_fn(
-    task: Task, state: Dict[str, Any], response_dict: dict
-):
+
+def process_agent_response_fn(task: Task, state: Dict[str, Any], response_dict: dict):
     """Process agent response."""
     return (
         AgentChatResponse(response_dict["response_str"]),
         response_dict["is_done"],
     )
 
-TEMPERATURE = 0
-# llm_config = {
-#     "llm-temperature": TEMPERATURE,
-#     "request_timeout": 120,
-#     "verbose": True,
-#     "model_name": st.session_state["llm_chat_model_name"],
-# }
-# logger.info(f"\n\nllm-config = {json.dumps(llm_config)}")
 
-llm = AzureOpenAI(
-    temperature=0,
-    streaming=True,
-    azure_deployment=st.session_state["llm_chat_engine"],
-    model_name=st.session_state["llm_chat_model_name"],
-    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-    openai_api_version=os.environ["OPENAI_API_VERSION"],
-    request_timeout=45,
-    verbose=True
-    )
 
 qp = QP(verbose=True)
 
@@ -221,6 +218,8 @@ agent_input_component = AgentInputComponent(fn=agent_input_fn)
 react_prompt_component = AgentFnComponent(
     fn=react_prompt_fn, partial_dict={"tools": [sql_tool]}
 )
+
+
 parse_react_output = AgentFnComponent(fn=parse_react_output_fn)
 run_tool = AgentFnComponent(fn=run_tool_fn)
 process_response = AgentFnComponent(fn=process_response_fn)
@@ -262,14 +261,10 @@ qp.add_link("run_tool", "process_agent_response")
 
 
 agent_worker = QueryPipelineAgentWorker(qp)
-agent = AgentRunner(
-    agent_worker, callback_manager=CallbackManager([]), verbose=True
-)
+agent = AgentRunner(agent_worker, callback_manager=CallbackManager([]), verbose=True)
 
 # start task
-task = agent.create_task(
-    "What are some tracks from the artist AC/DC? Limit it to 3"
-)
+task = agent.create_task("What are some tracks from the artist AC/DC? Limit it to 3")
 step_output = agent.run_step(task.task_id)
 
 logger.info(f"{step_output=}")
