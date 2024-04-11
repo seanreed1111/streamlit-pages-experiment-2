@@ -4,10 +4,10 @@ import urllib
 from pathlib import Path
 
 import streamlit as st
-import tiktoken
-from langchain_community.utilities.sql_database import SQLDatabase
+from llama_index.core import SQLDatabase
 from loguru import logger
-from llama_index.llms.azure_openai import AzureOpenAI
+from sqlalchemy import create_engine
+
 LANGCHAIN_PROJECT = "Llama-index SQL Agent App #1"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
@@ -47,19 +47,6 @@ if "llm_python_agent_messages" not in st.session_state:
     st.session_state["llm_python_agent_messages"] = []
 
 
-
-from llama_index.core import SQLDatabase
-from sqlalchemy import (
-    create_engine,
-    MetaData,
-    Table,
-    Column,
-    String,
-    Integer,
-    select,
-    column,
-)
-
 def get_connection_string(config_dir_path, db_config_file):
     driver = "{ODBC Driver 18 for SQL Server}"
     db_config_path = config_dir_path / db_config_file
@@ -87,7 +74,7 @@ if db_connection_radio == "Connect to WAB DB" and "db" not in st.session_state:
         "performing database configuration and connecting... please wait"
     ):
 
-        test_query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;"
+        # test_query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;"
         try:
             sqlalchemy_connection_string = (
                 get_connection_string(

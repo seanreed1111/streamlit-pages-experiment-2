@@ -5,7 +5,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, Dict, List#, Optional, Set, Tuple, cast
 
 import streamlit as st
 from llama_index.core.agent import (
@@ -27,16 +27,15 @@ from llama_index.core.query_engine import NLSQLTableQueryEngine
 from llama_index.core.query_pipeline import (
     AgentFnComponent,
     AgentInputComponent,
-    CustomAgentComponent,
-    InputComponent,
-    Link,
-    QueryComponent,
+    # CustomAgentComponent,
+    # InputComponent,
+    # Link,
+    # QueryComponent,
     ToolRunnerComponent,
 )
 from llama_index.core.query_pipeline import QueryPipeline as QP
 from llama_index.core.settings import Settings
 from llama_index.core.tools import BaseTool, QueryEngineTool
-# from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.llms.azure_openai import AzureOpenAI
 from loguru import logger
@@ -88,7 +87,7 @@ def logger_setup():
 logger_setup()
 logger.info(f"Project:{os.environ['LANGCHAIN_PROJECT']}")
 if "db" not in st.session_state:
-    st.info("Please go back to main page and connect to the database")
+    st.info("Please go back to the `app` page and connect to the WAB database")
     st.stop()
 
 llm = AzureOpenAI(
@@ -120,13 +119,13 @@ sql_database = st.session_state["db"]
 
 sql_query_engine = NLSQLTableQueryEngine(
     sql_database=sql_database,
-    tables=["party", "deposit", "account"],
+    tables=["party", "deposit", "account", "party_account"],
     verbose=True,
 )
 sql_tool = QueryEngineTool.from_defaults(
     query_engine=sql_query_engine,
     name="sql_tool",
-    description=("Useful for translating a natural language query into a SQL query"),
+    description=("Useful for translating a natural language query into a MSSQL query"),
 )
 
 
@@ -263,12 +262,32 @@ qp.add_link("run_tool", "process_agent_response")
 agent_worker = QueryPipelineAgentWorker(qp)
 agent = AgentRunner(agent_worker, callback_manager=CallbackManager([]), verbose=True)
 
-# start task
-task = agent.create_task("What are some tracks from the artist AC/DC? Limit it to 3")
-step_output = agent.run_step(task.task_id)
+# start task#########################################################3
+# task = agent.create_task("how many tables are in the schema?")
 
-logger.info(f"{step_output=}")
+# task = agent.create_task("show me the account ids of accounts with the top ten deposit amounts")
+# q = "calculate the total deposit amount by cost center. \
+#     show the top ten deposit amounts along with the associated cost center"
 
+q = """
+Calculate the total deposit amount by cost center 
+and show a report of the top 10 deposit amounts along with the respective cost centers
+"""
+
+# q= """
+# retrieve the top 10 cost centers along with the number of deposit accounts, 
+# total deposit amount, average deposit account balance, and the deposit rank. 
+# Use the PARTY, PARTY_ACCOUNT, ACCOUNT, and DEPOSIT to get your answer
+# show deposit current balance in descending order.
+# """
+task = agent.create_task(q)
+# step_output = agent.run_step(task.task_id)
+
+# logger.info(f"{step_output=}")
+
+response = agent.chat(q)
+print(response)
+logger.info(str(response))
 # if (
 #     "llm_sql_agent_messages" not in st.session_state
 #     or st.button("Clear message history")
