@@ -269,10 +269,10 @@ agent = AgentRunner(agent_worker, callback_manager=CallbackManager([]), verbose=
 # q = "calculate the total deposit amount by cost center. \
 #     show the top ten deposit amounts along with the associated cost center"
 
-q = """
-Calculate the total deposit amount by cost center 
-and show a report of the top 10 deposit amounts along with the respective cost centers
-"""
+# q = """
+# Calculate the total deposit amount by cost center 
+# and show a report of the top 10 deposit amounts along with the respective cost centers
+# """
 
 # q= """
 # retrieve the top 10 cost centers along with the number of deposit accounts, 
@@ -280,35 +280,41 @@ and show a report of the top 10 deposit amounts along with the respective cost c
 # Use the PARTY, PARTY_ACCOUNT, ACCOUNT, and DEPOSIT to get your answer
 # show deposit current balance in descending order.
 # """
-task = agent.create_task(q)
+# task = agent.create_task(q)
 # step_output = agent.run_step(task.task_id)
 
 # logger.info(f"{step_output=}")
 
-response = agent.chat(q)
-print(response)
-logger.info(str(response))
-# if (
-#     "llm_sql_agent_messages" not in st.session_state
-#     or st.button("Clear message history")
-#     or not st.session_state.llm_sql_agent_messages
-# ):
-#     st.session_state["llm_sql_agent_messages"] = [
-#         ChatMessage(role="assistant", content="How can I help you?")
-#     ]
+# response = agent.chat(q)
+# print(response)
+# logger.info(str(response))
 
-# for msg in st.session_state.llm_sql_agent_messages:
-#     if msg["role"] != "system":
-#         st.chat_message(msg["role"]).write(msg["content"])
+if (
+    "llm_sql_agent_messages" not in st.session_state
+    or st.button("Clear message history")
+    or not st.session_state.llm_sql_agent_messages
+):
+    st.session_state["llm_sql_agent_messages"] = [
+        ChatMessage(role="assistant", content="How can I help you?")
+    ]
+# for msg in st.session_state.messages:
+#     st.chat_message(msg.role).write(msg.content)
+for msg in st.session_state.llm_sql_agent_messages:
+    role = msg.dict()['role']
+    if role == MessageRole.ASSISTANT:
+        st.chat_message("assistant").write(msg.dict()["content"])
+    elif role == MessageRole.USER:
+        st.chat_message("user").write(msg.dict()["content"])        
 
-# if prompt := st.chat_input():
-#     st.session_state.llm_sql_agent_messages.append(ChatMessage(role="user", content=prompt))
-#     st.chat_message("user").write(prompt)
-#     logger.info(f"{prompt=}")
+if prompt := st.chat_input():
+    st.session_state.llm_sql_agent_messages.append(ChatMessage(role="user", content=prompt))
+    st.chat_message("user").write(prompt)
+    logger.info(f"{prompt=}")
 
-#     # response = agent_executor.invoke({"input": prompt}, callbacks=[st_cb])
-#     st.session_state.llm_sql_agent_messages.append(
-#         ChatMessage(role="assistant", content=response.message.content)
-#     )
-#     with st.chat_message("assistant"):
-#         st.write(response.message.content)
+    response: AgentChatResponse = agent.chat(prompt)
+    # logger.info(f"type of response = {type(response)}")
+    st.session_state.llm_sql_agent_messages.append(
+        ChatMessage(role="assistant", content=response.response)
+    )
+    with st.chat_message("assistant"):
+        st.write(response.response)
