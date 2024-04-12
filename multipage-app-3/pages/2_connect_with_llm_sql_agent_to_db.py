@@ -12,7 +12,7 @@ from pathlib import Path
 
 import streamlit as st
 from langchain.agents import create_sql_agent
-
+from langchain_core.callbacks import Callbacks
 # from langchain.agents.agent_types import AgentType
 # from langchain.schema import ChatMessage
 # from langchain.storage import InMemoryStore

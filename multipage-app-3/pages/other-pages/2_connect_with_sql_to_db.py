@@ -34,9 +34,10 @@ test_query = """
 def parse_repsonse(response: str):
     if response:
         python_obj_from_response = ast.literal_eval(response)
-        logger.info(f"python_obj_from_response = {python_obj_from_response}")
-        if isinstance(python_obj_from_response, list):
-            return ("ok", python_obj_from_response)
+        if python_obj_from_response:
+            logger.info(f"python_obj_from_response = {python_obj_from_response}")
+            if isinstance(python_obj_from_response, list):
+                return ("ok", python_obj_from_response)
     return ("error", response)
 
 

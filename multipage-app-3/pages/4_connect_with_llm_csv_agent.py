@@ -44,7 +44,7 @@ from langchain_openai import AzureChatOpenAI
 from loguru import logger
 from mpl_toolkits.basemap import Basemap
 
-LANGCHAIN_PROJECT = "Multipage App Chat With CSV"
+LANGCHAIN_PROJECT = "Multipage App LLM CSV Agent"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 

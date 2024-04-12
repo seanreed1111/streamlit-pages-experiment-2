@@ -15,10 +15,11 @@ RUN apt-get update && apt-get install -y \
     python-is-python3 \
     unixodbc-dev
 
-COPY . .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
-    rm -rf ~/.cache/pip && \
-    ACCEPT_EULA=Y apt-get install -y /app/scripts/msodbcsql18_18.3.2.1-1_amd64.deb && \
+    rm -rf ~/.cache/pip
+
+RUN ACCEPT_EULA=Y apt-get install -y /app/scripts/msodbcsql18_18.3.2.1-1_amd64.deb && \
     ACCEPT_EULA=Y apt-get install -y /app/scripts/mssql-tools18_18.2.1.1-1_amd64.deb && \
     echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc && \
     . ~/.bashrc
