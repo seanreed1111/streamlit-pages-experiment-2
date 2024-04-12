@@ -1,10 +1,17 @@
 import json
 import os
+import sys
 import urllib
 from pathlib import Path
 
 import streamlit as st
-from llama_index.core import SQLDatabase
+if "src" not in sys.path:
+    sys.path.append("src")  # needed to get the azure config imports to run
+from src.locals import SQLDatabase
+
+# from llama_index.core import SQLDatabase
+# from langchain_community.utilities.sql_database import SQLDatabase
+# from llama_index.core.utilities.sql_wrapper import SQLDatabase
 from loguru import logger
 from sqlalchemy import create_engine
 
@@ -69,29 +76,53 @@ def get_connection_string(config_dir_path, db_config_file):
 db_connection_radio = st.radio(
     "Choose one", ["No DB Connection Needed", "Connect to WAB DB"]
 )
+
+@logger.catch
+def test_and_return_db(test_query):
+    sqlalchemy_connection_string = (
+        get_connection_string(
+        config_dir_path=st.session_state["config_dir_path"], 
+        db_config_file=DB_CONFIG_FILE
+        )
+    )
+    engine = create_engine(sqlalchemy_connection_string)
+    db = SQLDatabase(engine, **SCHEMA ) #SCHEMA????
+    logger.debug(f"{db.run_sql(test_query)}")
+    return db
+
+
+
 if db_connection_radio == "Connect to WAB DB" and "db" not in st.session_state:
     with st.spinner(
         "performing database configuration and connecting... please wait"
     ):
 
-        test_query = "select top 10 from trg.deposit;"
+        test_query = "select top 10 from deposit;"
+        # test_query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;"
         try:
-            sqlalchemy_connection_string = (
-                get_connection_string(
-                config_dir_path=st.session_state["config_dir_path"], 
-                db_config_file=DB_CONFIG_FILE
-                )
-            )
-            engine = create_engine(sqlalchemy_connection_string)
-            db = SQLDatabase(engine, **SCHEMA ) #SCHEMA????
-            logger.debug(f"{db.run_sql(test_query)}") ### HOW DO YOU RUN A QUERY???
-            st.session_state["db"] = db
-            st.success("Sucessfully created the database")
-            st.info("Please select a app to use from the sidebar.")
-            # logger.info("DB test query completed successfully")
+            st.session_state['db'] = test_and_return_db(test_query)
         except Exception as e:
             st.warning("Database connection failed!")
             st.error(e)
             logger.error(str(e))
+
+        # try:
+        #     sqlalchemy_connection_string = (
+        #         get_connection_string(
+        #         config_dir_path=st.session_state["config_dir_path"], 
+        #         db_config_file=DB_CONFIG_FILE
+        #         )
+        #     )
+        #     engine = create_engine(sqlalchemy_connection_string)
+        #     db = SQLDatabase(engine, **SCHEMA ) #SCHEMA????
+        #     logger.debug(f"{db.run_sql(test_query)}") ### HOW DO YOU RUN A QUERY???
+        #     st.session_state["db"] = db
+        #     st.success("Sucessfully created the database")
+        #     st.info("Please select a app to use from the sidebar.")
+        #     # logger.info("DB test query completed successfully")
+        # except Exception as e:
+        #     st.warning("Database connection failed!")
+        #     st.error(e)
+        #     logger.error(str(e))
 
     
