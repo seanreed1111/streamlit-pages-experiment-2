@@ -7,7 +7,7 @@ import streamlit as st
 from langchain_community.utilities.sql_database import SQLDatabase
 from loguru import logger
 
-LANGCHAIN_PROJECT = "Multipage App #3"
+LANGCHAIN_PROJECT = "Multipage App #3 with LangChain"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 

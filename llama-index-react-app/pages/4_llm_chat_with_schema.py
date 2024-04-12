@@ -1,18 +1,18 @@
-from pathlib import Path
-
-# import ast
-import os
 import json
+import os
 from functools import partial
-import streamlit as st
 
-# import pandas as pd
-from llama_index.llms.azure_openai import AzureOpenAI
 # from langchain_community.utilities.sql_database import SQLDatabase
 from io import StringIO
+from pathlib import Path
+
+import streamlit as st
 
 # import urllib
 from langchain.schema import ChatMessage
+
+# import pandas as pd
+from llama_index.llms.azure_openai import AzureOpenAI
 from loguru import logger
 
 LANGCHAIN_PROJECT = "LLM chat with Schema - llama-index-app"
@@ -111,7 +111,9 @@ llm = AzureOpenAI(
 
 
 if prompt := st.chat_input():
-    st.session_state.chat_with_schema_messages.append(ChatMessage(role="user", content=prompt))
+    st.session_state.chat_with_schema_messages.append(
+        ChatMessage(role="user", content=prompt)
+    )
     st.chat_message("user").write(prompt)
     response = llm.chat(st.session_state.chat_with_schema_messages)
     st.session_state.chat_with_schema_messages.append(
@@ -119,4 +121,3 @@ if prompt := st.chat_input():
     )
     with st.chat_message("assistant"):
         st.write(response.message.content)
-    
