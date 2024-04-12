@@ -32,10 +32,11 @@ test_query = """
 @logger.catch
 @st.cache_data
 def parse_repsonse(response: str):
-    python_obj_from_response = ast.literal_eval(response)
-    logger.info(f"python_obj_from_response = {python_obj_from_response}")
-    if isinstance(python_obj_from_response, list):
-        return ("ok", python_obj_from_response)
+    if response:
+        python_obj_from_response = ast.literal_eval(response)
+        logger.info(f"python_obj_from_response = {python_obj_from_response}")
+        if isinstance(python_obj_from_response, list):
+            return ("ok", python_obj_from_response)
     return ("error", response)
 
 
@@ -92,4 +93,7 @@ if prompt := st.chat_input():
         st.session_state.sql_messages.append(
             ChatMessage(role="assistant", content=response)
         )
-        st.write(response)
+        if response:
+            st.write(response)
+        else:
+            st.chat_message(msg.role).write("error: no response")    
