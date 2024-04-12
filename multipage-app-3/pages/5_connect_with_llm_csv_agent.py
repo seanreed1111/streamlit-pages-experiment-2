@@ -44,7 +44,7 @@ from langchain_openai import AzureChatOpenAI
 from loguru import logger
 from mpl_toolkits.basemap import Basemap
 
-LANGCHAIN_PROJECT = "Multipage App #3 Chat With CSV"
+LANGCHAIN_PROJECT = "Multipage App Chat With CSV"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 
@@ -157,22 +157,22 @@ with st.spinner("Setting up python agent...please wait"):
     st.success("Agent setup done!")
 
 if (
-    "llm_python_agent_messages" not in st.session_state
+    "llm_csv_agent_messages" not in st.session_state
     or st.button("Clear message history")
-    or not st.session_state.llm_python_agent_messages
+    or not st.session_state.llm_csv_agent_messages
 ):
-    st.session_state["llm_python_agent_messages"] = [
+    st.session_state["llm_csv_agent_messages"] = [
         {
             "role": "assistant",
             "content": "I am an agent designed to write and execute python code. How can I help you?",
         }
     ]
 
-for msg in st.session_state.llm_python_agent_messages:
+for msg in st.session_state.llm_csv_agent_messages:
     st.chat_message(msg["role"]).write(msg["content"])
 
 if prompt := st.chat_input():
-    st.session_state.llm_python_agent_messages.append(
+    st.session_state.llm_csv_agent_messages.append(
         {"role": "user", "content": prompt}
     )
     st.chat_message("user").write(prompt)
@@ -181,7 +181,7 @@ if prompt := st.chat_input():
         st_cb = StreamlitCallbackHandler(st.container())
         response = agent_executor.invoke({"input": prompt}, callbacks=[st_cb])
 
-        st.session_state.llm_python_agent_messages.append(
+        st.session_state.llm_csv_agent_messages.append(
             {"role": "assistant", "content": response}
         )
         st.write(response)

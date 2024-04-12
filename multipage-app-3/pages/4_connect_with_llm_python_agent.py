@@ -53,7 +53,6 @@ logger.add(sys.stderr, level=log_level, format=log_format, colorize=True, backtr
 logger.add(log_file_path, level=log_level, format=log_format, colorize=False, backtrace=True, diagnose=True)
 
 with st.sidebar:
-    st.markdown("## PICK LLM")
     llm_choice_radio_python_agent = st.radio(
         "Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"]
     )
@@ -115,7 +114,7 @@ with st.sidebar:
 
 with st.spinner("Setting up python agent...please wait"):
     llm = AzureChatOpenAI(
-        temperature=0.05,
+        temperature=0,
         streaming=True,
         azure_deployment=st.session_state["python_agent_deployment_name"],
         azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],

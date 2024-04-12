@@ -10,7 +10,7 @@ from langchain.schema import ChatMessage
 from langchain_openai import AzureChatOpenAI
 from loguru import logger
 
-LANGCHAIN_PROJECT = "Multipage App #3 Chat with LLM"
+LANGCHAIN_PROJECT = "Multipage App Chat with LLM"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.title(LANGCHAIN_PROJECT)
 with st.sidebar:
@@ -94,3 +94,5 @@ if prompt := st.chat_input():
         st.session_state.messages.append(
             ChatMessage(role="assistant", content=response.content)
         )
+        st.write(response)
+        logger.info("response: " + str(response))

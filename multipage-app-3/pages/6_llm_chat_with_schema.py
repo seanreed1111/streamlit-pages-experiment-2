@@ -2,7 +2,7 @@ from pathlib import Path
 # import ast 
 import os
 import json
-from functools import partial
+# from functools import partial
 import streamlit as st
 # import pandas as pd
 from langchain_openai import AzureChatOpenAI
@@ -19,7 +19,7 @@ st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
-MAX_TOKENS = 1000
+# MAX_TOKENS = 1000
 config_dir_path = st.session_state["config_dir_path"]
 
 if "default_schema_filename" not in st.session_state:
@@ -53,7 +53,7 @@ def set_system_message(schema):
         highest possible. Respond with the query and the accuracy score. If you give
         an accuracy score of 1 or 2, briefly state your reason.
         """
-    system_message = ChatMessage(role="user", content=system_message_string) 
+    system_message = ChatMessage(role="system", content=system_message_string) 
     st.session_state["chat_with_schema_system_message"] = system_message
     logger.info(f"first 500 chars of system message is {system_message.content[:500]}")
     st.session_state["chat_with_schema_messages"].append(system_message)
@@ -114,26 +114,27 @@ if reset_chat_button or not st.session_state["chat_with_schema_messages"] or "ch
     st.session_state["chat_with_schema_messages"] = [ChatMessage(role="assistant", content=content)]
 
 for msg in st.session_state.chat_with_schema_messages:
-    if msg is not st.session_state["chat_with_schema_system_message"]: #do not write system message over and over again
+    if msg.role != "system":
         st.chat_message(msg.role).write(msg.content)
 
 if prompt := st.chat_input():
     st.session_state.chat_with_schema_messages.append(ChatMessage(role="user", content=prompt))
-    st.chat_message("user").write(prompt)
+    # st.chat_message("user").write(prompt)
 
-    with st.chat_message("assistant"): #I should make a partial and add the stream_handler into it
+    with st.chat_message("assistant"):
         stream_handler = StreamHandler(st.empty())
         llm = AzureChatOpenAI(
             temperature=0,
             streaming=True,
-            max_tokens=MAX_TOKENS,
+            # max_tokens=MAX_TOKENS,
             azure_deployment=os.environ["AZURE_OPENAI_API_DEPLOYMENT_NAME_GPT35"],
             azure_endpoint=os.environ["AZURE_OPENAI_API_ENDPOINT"],
             model_name=os.environ["MODEL_NAME_GPT35"],
             openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
-            request_timeout=45,
+            request_timeout=120,
             verbose=True,
             callbacks=[stream_handler]
         )
         response = llm.invoke(st.session_state.chat_with_schema_messages)
         st.session_state.chat_with_schema_messages.append(ChatMessage(role="assistant", content=response.content))
+        st.write(response)

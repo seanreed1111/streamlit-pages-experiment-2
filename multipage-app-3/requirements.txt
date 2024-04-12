@@ -6,6 +6,7 @@ geopandas==0.14.3
 geopy==2.4.1
 ipython==8.12.3
 langchain==0.1.14
+langchainhub==0.1.15
 langchain_community==0.0.31
 langchain_experimental==0.0.56
 langchain_openai==0.1.1

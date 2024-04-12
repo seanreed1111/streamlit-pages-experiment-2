@@ -57,7 +57,7 @@ def logger_setup():
 
 logger_setup()
 
-LANGCHAIN_PROJECT = "Multipage App #3 Chat With SQL Agent WAB DB"
+LANGCHAIN_PROJECT = "Multipage App Chat With SQL Agent WAB DB"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 
