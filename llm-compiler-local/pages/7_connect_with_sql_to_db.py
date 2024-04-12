@@ -39,13 +39,14 @@ test_query = """
 #         logger.error(str(e))
 
 
-@logger.catch
+
 @st.cache_data
 def parse_repsonse(response: str):
-    python_obj_from_response = ast.literal_eval(response)
-    logger.info(f"python_obj_from_response = {python_obj_from_response}")
-    if isinstance(python_obj_from_response, list):
-        return ("ok", python_obj_from_response)
+    if response:
+        python_obj_from_response = ast.literal_eval(response)
+        logger.info(f"python_obj_from_response = {python_obj_from_response}")
+        if isinstance(python_obj_from_response, list):
+            return ("ok", python_obj_from_response)
     return ("error", response)
 
 
@@ -74,8 +75,12 @@ for msg in st.session_state.sql_messages:
     if msg.role == "user":
         st.chat_message(msg.role).write(msg.content)
     elif msg.role == "assistant" and msg != st.session_state["first_sql_message"]:
-        status_code, repsonse = get_dataframe_from_response(msg.content) #msg.content is always text
-        st.chat_message(msg.role).write(repsonse)       
+        status_code, response = get_dataframe_from_response(msg.content) #msg.content is always text
+        if response:
+                st.chat_message(msg.role).write(response)
+        else:
+                st.chat_message(msg.role).write("no response")              
+
 
 
 with st.sidebar:
