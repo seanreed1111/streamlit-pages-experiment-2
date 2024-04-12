@@ -49,7 +49,6 @@ st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 
 with st.sidebar:
-    st.markdown("## PICK LLM")
     llm_choice_radio_python_agent = st.radio(
         "Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"]
     )

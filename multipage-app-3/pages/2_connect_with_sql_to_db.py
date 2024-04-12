@@ -68,10 +68,10 @@ for msg in st.session_state.sql_messages:
     if msg.role == "user":
         st.chat_message(msg.role).write(msg.content)
     elif msg.role == "assistant" and msg != st.session_state["first_sql_message"]:
-        status_code, repsonse = get_dataframe_from_response(
+        status_code, response = get_dataframe_from_response(
             msg.content
         )  # msg.content is always text
-        st.chat_message(msg.role).write(repsonse)
+        st.chat_message(msg.role).write(response)
 
 
 with st.sidebar:
@@ -80,6 +80,7 @@ with st.sidebar:
 
 if prompt := st.chat_input():
     with st.spinner("running query"):
+        st.chat_message("user").write(prompt)
         st.session_state.sql_messages.append(ChatMessage(role="user", content=prompt))
         try:
             response = db.run(prompt)
@@ -91,4 +92,4 @@ if prompt := st.chat_input():
         st.session_state.sql_messages.append(
             ChatMessage(role="assistant", content=response)
         )
-        st.write(repsonse)
+        st.write(response)
