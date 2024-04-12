@@ -15,7 +15,7 @@ from io import StringIO
 from langchain.schema import ChatMessage
 from loguru import logger
 
-LANGCHAIN_PROJECT = "LLM chat with Schema - multipage app"
+LANGCHAIN_PROJECT = "LLM chat with Schema - llama-index-app"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT

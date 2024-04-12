@@ -74,7 +74,7 @@ if db_connection_radio == "Connect to WAB DB" and "db" not in st.session_state:
         "performing database configuration and connecting... please wait"
     ):
 
-        # test_query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;"
+        test_query = "select top 10 from trg.deposit;"
         try:
             sqlalchemy_connection_string = (
                 get_connection_string(
@@ -84,7 +84,7 @@ if db_connection_radio == "Connect to WAB DB" and "db" not in st.session_state:
             )
             engine = create_engine(sqlalchemy_connection_string)
             db = SQLDatabase(engine, **SCHEMA ) #SCHEMA????
-            # db.run_sql(test_query) ### HOW DO YOU RUN A QUERY???
+            logger.debug(f"{db.run_sql(test_query)}") ### HOW DO YOU RUN A QUERY???
             st.session_state["db"] = db
             st.success("Sucessfully created the database")
             st.info("Please select a app to use from the sidebar.")

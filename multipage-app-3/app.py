@@ -4,7 +4,6 @@ import urllib
 from pathlib import Path
 
 import streamlit as st
-import tiktoken
 from langchain_community.utilities.sql_database import SQLDatabase
 from loguru import logger
 
@@ -14,28 +13,25 @@ st.markdown(f"### {LANGCHAIN_PROJECT}")
 
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
-USETRG = True
-SCHEMA = {"schema": "trg"} if USETRG else {"schema": "sandbox"}
+SCHEMA = {"schema": "trg"}
 
-with st.spinner("performing Azure configuration... please wait"):
-    if "config_dir_path" not in st.session_state:
-        st.session_state["config_dir_path"] = Path.cwd() / "config"
+def run_azure_config(config_dir):
+    all_config_file_path = config_dir / "allconfig.json"
+    config = {}
+    with open(all_config_file_path) as json_config:
+        config.update(json.load(json_config))
+        for k in config:
+            os.environ[k] = config[k]
 
-    def run_azure_config(config_dir):
-        all_config_file_path = config_dir / "allconfig.json"
-        config = {}
-        with open(all_config_file_path) as json_config:
-            config.update(json.load(json_config))
-            for k in config:
-                os.environ[k] = config[k]
-
-    if "run_azure_config" not in st.session_state:
-        run_azure_config(st.session_state["config_dir_path"])
-        st.session_state["run_azure_config"] = True
-
-    if st.session_state["run_azure_config"]:
-        st.success("Azure Configuration... done.")
-
+st.session_state["config_dir_path"] = Path.cwd() / "config"
+reload_azure_config = st.button("Reload azure configuration file")
+if reload_azure_config:
+    st.session_state["run_azure_config"] = False
+if ("run_azure_config" not in st.session_state) or not st.session_state["run_azure_config"]:
+    with st.spinner("performing Azure configuration... please wait"):
+            run_azure_config(st.session_state["config_dir_path"])
+            st.session_state["run_azure_config"] = True
+            st.success("Azure Configuration... done.")
 
 # establish chat messages for each page and add to session state
 if "messages" not in st.session_state:
