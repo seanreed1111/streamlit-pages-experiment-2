@@ -22,8 +22,8 @@ RUN pip install --no-cache-dir -r requirements.txt && \
     rm -rf ~/.cache/pip
 COPY . .
 # RUN apt-get update && \
-#     ACCEPT_EULA=Y apt-get install -y msodbcsql && \
-#     ACCEPT_EULA=Y apt-get install -y mssql-tools18 && \
+    # ACCEPT_EULA=Y apt-get install -y msodbcsql && \
+    # ACCEPT_EULA=Y apt-get install -y mssql-tools18 && \
 #     echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc && \
 #     . ~/.bashrc
 RUN apt-get update && \
