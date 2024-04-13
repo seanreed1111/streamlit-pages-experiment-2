@@ -7,9 +7,9 @@ from pathlib import Path
 import streamlit as st
 if "src" not in sys.path:
     sys.path.append("src")  # needed to get the azure config imports to run
-from src.locals import SQLDatabase
+# from src.locals import SQLDatabase
 
-# from llama_index.core import SQLDatabase
+from llama_index.core import SQLDatabase
 # from langchain_community.utilities.sql_database import SQLDatabase
 # from llama_index.core.utilities.sql_wrapper import SQLDatabase
 from loguru import logger
@@ -21,7 +21,7 @@ st.markdown(f"### {LANGCHAIN_PROJECT}")
 
 os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
-SCHEMA = {"schema": "trg"}
+# SCHEMA = {"schema": "trg"}
 CONFIG_DIR_PATH = Path.cwd() / "config"
 DB_CONFIG_FILE = "db_config_llama_index.json"
 AZURE_CONFIG_FILE= "azure_config_llama_index.json"
@@ -78,7 +78,7 @@ db_connection_radio = st.radio(
 )
 
 @logger.catch
-def test_and_return_db(test_query):
+def get_db_and_run_test_query(test_query):
     sqlalchemy_connection_string = (
         get_connection_string(
         config_dir_path=st.session_state["config_dir_path"], 
@@ -86,8 +86,8 @@ def test_and_return_db(test_query):
         )
     )
     engine = create_engine(sqlalchemy_connection_string)
-    db = SQLDatabase(engine, **SCHEMA ) #SCHEMA????
-    logger.debug(f"{db.run_sql(test_query)}")
+    db = SQLDatabase(engine) #SQLDatabase(engine, **SCHEMA ) #SCHEMA????
+    logger.debug(f"{db.run(test_query)}")
     return db
 
 
@@ -100,7 +100,7 @@ if db_connection_radio == "Connect to WAB DB" and "db" not in st.session_state:
         test_query = "select top 10 from deposit;"
         # test_query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;"
         try:
-            st.session_state['db'] = test_and_return_db(test_query)
+            st.session_state['db'] = get_db_and_run_test_query(test_query)
         except Exception as e:
             st.warning("Database connection failed!")
             st.error(e)

@@ -1,11 +1,40 @@
 import json
 import os
+import sys
 import urllib
 from pathlib import Path
 
 import streamlit as st
 from langchain_community.utilities.sql_database import SQLDatabase
 from loguru import logger
+
+
+def logger_setup():
+    log_dir = Path.home() / "PythonProjects" / "multipage-app-3" / "logs"
+    log_dir.mkdir(exist_ok=True, parents=True)
+    log_file_name = Path(__file__).stem + ".log"
+    log_file_path = log_dir / log_file_name
+    log_level = "DEBUG"
+    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <yellow>Line {line: >4} ({file}):</yellow> <b>{message}</b>"
+    logger.add(
+        sys.stderr,
+        level=log_level,
+        format=log_format,
+        colorize=True,
+        backtrace=True,
+        diagnose=True,
+    )
+    logger.add(
+        log_file_path,
+        level=log_level,
+        format=log_format,
+        colorize=False,
+        backtrace=True,
+        diagnose=True,
+    )
+
+
+logger_setup()
 
 LANGCHAIN_PROJECT = "LLM-Compiler"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
