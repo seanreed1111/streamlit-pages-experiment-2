@@ -93,16 +93,16 @@ with st.spinner("Setting up agent...please wait"):
         st.error("Please go back to main app page and connect to the WAB database")
         st.stop()
 
-    TEMPERATURE = 0.05
+    TEMPERATURE = 0
 
-    llm_config = {
-        "llm-temperature": TEMPERATURE,
-        "request_timeout": 120,
-        "verbose": True,
-        "model_name": st.session_state["agent_model_name"],
-    }
+    # llm_config = {
+    #     "llm-temperature": TEMPERATURE,
+    #     "request_timeout": 120,
+    #     "verbose": True,
+    #     "model_name": st.session_state["agent_model_name"],
+    # }
 
-    logger.info(f"\nllm-config = {json.dumps(llm_config)}")
+    # logger.info(f"\nllm-config = {json.dumps(llm_config)}")
     llm = AzureChatOpenAI(
         temperature=TEMPERATURE,
         streaming=True,
@@ -116,16 +116,19 @@ with st.spinner("Setting up agent...please wait"):
 
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)
 
-    agent_executor = create_sql_agent(
-        llm=llm,
-        prefix=NEW_SQL_PREFIX,
-        suffix=None,
-        toolkit=toolkit,
-        verbose=True,
-        agent_type="openai-tools",
-        max_iterations=15,
-        agent_executor_kwargs={"return_intermediate_steps": True},
-    )
+    with st.sidebar:
+        agent_prompt_radio = st.radio("Choose one", ["Use Default Prompt", "Use New Specialized Prompt"])
+        prefix = None if agent_prompt_radio == "Use Default Prompt" else NEW_SQL_PREFIX
+        agent_executor = create_sql_agent(
+            llm=llm,
+            prefix=prefix,
+            suffix=None,
+            toolkit=toolkit,
+            verbose=True,
+            agent_type="openai-tools",
+            max_iterations=15,
+            agent_executor_kwargs={"return_intermediate_steps": True},
+        )
     st.success("Agent setup done!")
 
 if (
