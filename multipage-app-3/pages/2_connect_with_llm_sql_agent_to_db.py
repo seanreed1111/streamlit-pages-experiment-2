@@ -15,11 +15,7 @@ from langchain.agents import create_sql_agent
 from langchain_core.callbacks import Callbacks
 # from langchain.agents.agent_types import AgentType
 # from langchain.schema import ChatMessage
-# from langchain.storage import InMemoryStore
-# from langchain.storage import LocalFileStore
-# from langchain.storage import LocalFileStore
-# # Instantiate the LocalFileStore with the root path
-# file_store = LocalFileStore("/path/to/root")
+
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 
 # from langchain.callbacks import StreamlitCallbackHandler
@@ -31,7 +27,7 @@ from loguru import logger
 
 
 def logger_setup():
-    log_dir = Path.home() / "PythonProjects" / "multipage-app-3" / "logs"
+    log_dir = Path.home() / "PythonProjects" / "logs" / "multipage-app-3"
     log_dir.mkdir(exist_ok=True, parents=True)
     log_file_name = Path(__file__).stem + ".log"
     log_file_path = log_dir / log_file_name
@@ -102,6 +98,7 @@ st.markdown(f"### {LANGCHAIN_PROJECT}")
 
 # When asked to perform multistep or complex tasks, you must first plan and then reflect on the steps.
 # """
+
 with st.sidebar:
     llm_choice_radio = st.radio("Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"])
     if llm_choice_radio == "GPT-3.5-turbo":
@@ -129,14 +126,14 @@ with st.spinner("Setting up agent...please wait"):
 
     TEMPERATURE = 0.05
 
-    llm_config = {
-        "llm-temperature": TEMPERATURE,
-        "request_timeout": 120,
-        "verbose": True,
-        "model_name": st.session_state["agent_model_name"],
-    }
+    # llm_config = {
+    #     "llm-temperature": TEMPERATURE,
+    #     "request_timeout": 120,
+    #     "verbose": True,
+    #     "model_name": st.session_state["agent_model_name"],
+    # }
 
-    logger.info(f"\nllm-config = {json.dumps(llm_config)}")
+    # logger.info(f"\nllm-config = {json.dumps(llm_config)}")
     llm = AzureChatOpenAI(
         temperature=TEMPERATURE,
         streaming=True,
@@ -151,13 +148,13 @@ with st.spinner("Setting up agent...please wait"):
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)
 
     agent_executor = create_sql_agent(
-        llm=llm,
+        llm=llm.with_config({"tags":["agent_llm"]}),
         toolkit=toolkit,
         verbose=True,
         agent_type="openai-tools",
         max_iterations=15,
         agent_executor_kwargs={"return_intermediate_steps": True},
-    )
+    ).with_config({"run_name":"Agent"})
     st.success("Agent setup done!")
 
 if (
