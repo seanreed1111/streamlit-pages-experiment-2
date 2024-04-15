@@ -12,7 +12,7 @@ from pathlib import Path
 
 import streamlit as st
 from langchain.agents import create_sql_agent
-from langchain_core.callbacks import Callbacks
+# from langchain_core.callbacks import Callbacks
 # from langchain.agents.agent_types import AgentType
 # from langchain.schema import ChatMessage
 # from langchain.storage import InMemoryStore
@@ -25,13 +25,17 @@ from langchain_community.agent_toolkits import SQLDatabaseToolkit
 # from langchain.callbacks import StreamlitCallbackHandler
 from langchain_community.callbacks import StreamlitCallbackHandler
 
+if "multipage-app-3" not in sys.path:
+    sys.path.append("../src")  # needed to get the  src imports to run
+
+from src.sql_agent_prompt import NEW_SQL_PREFIX
 # from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_openai import AzureChatOpenAI
 from loguru import logger
 
 
 def logger_setup():
-    log_dir = Path.home() / "PythonProjects" / "multipage-app-3" / "logs"
+    log_dir = Path.home() / "PythonProjects" / "logs" / "multipage-app-3" 
     log_dir.mkdir(exist_ok=True, parents=True)
     log_file_name = Path(__file__).stem + ".log"
     log_file_path = log_dir / log_file_name
@@ -57,51 +61,13 @@ def logger_setup():
 
 logger_setup()
 
+
+
 LANGCHAIN_PROJECT = "Multipage App Chat With SQL Agent WAB DB"
 st.set_page_config(page_title=LANGCHAIN_PROJECT, page_icon="")
 st.markdown(f"### {LANGCHAIN_PROJECT}")
 
-# sample_system_prompt = """
-# You are a MSSQL agent designed to interact with the user.
-# When crafting SQL queries, aim to include data elements that are human-readable.
-# For instance, rather than returning only a customer ID, include the customer name as well. This enhances the understandability of the results.
 
-# In this schema, 'party' refers to the customer.
-
-# Here are two example SQL queries for your reference:
-
-# Example #1
-# If the user asks you to find deposit values:
-
-# Perform the query
-# <<<SELECT SUM(DP_CUR_BAL) AS Total_Deposit_Value
-# FROM trg.DEPOSIT;>>>
-
-# Example #2
-# If you need to join three tables: trg.PARTY, trg.PARTY_ACCOUNT, and trg.DEPOSIT:
-# SELECT
-#     p.PRTY_ID AS Customer_ID,
-#     CASE
-#         WHEN p.PRTY_NM IS NOT NULL THEN p.PRTY_NM
-#         ELSE p.FRST_NM + ' ' + ISNULL(p.MDLE_NM, '') + ' ' + p.LST_NM
-#     END AS Customer_Name,
-#     SUM(d.DP_CUR_BAL) AS Total_Deposit_Value
-# FROM
-#     trg.PARTY p
-# JOIN
-#     trg.PARTY_ACCOUNT pa ON p.PRTY_ID = pa.PRTY_ID
-# JOIN
-#     trg.DEPOSIT d ON pa.ACCT_ID = d.ACCT_ID
-# GROUP BY
-#     p.PRTY_ID,
-#     p.PRTY_NM,
-#     p.FRST_NM,
-#     p.MDLE_NM,
-#     p.LST_NM;
-
-
-# When asked to perform multistep or complex tasks, you must first plan and then reflect on the steps.
-# """
 with st.sidebar:
     llm_choice_radio = st.radio("Choose one", ["GPT-3.5-turbo", "GPT-4-turbo"])
     if llm_choice_radio == "GPT-3.5-turbo":
@@ -152,6 +118,8 @@ with st.spinner("Setting up agent...please wait"):
 
     agent_executor = create_sql_agent(
         llm=llm,
+        prefix=NEW_SQL_PREFIX,
+        suffix=None,
         toolkit=toolkit,
         verbose=True,
         agent_type="openai-tools",
