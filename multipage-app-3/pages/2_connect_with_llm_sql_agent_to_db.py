@@ -127,7 +127,7 @@ with st.spinner("Setting up agent...please wait"):
         st.error("Please go back to main app page and connect to the WAB database")
         st.stop()
 
-    TEMPERATURE = 0.05
+    TEMPERATURE = 0
 
     llm_config = {
         "llm-temperature": TEMPERATURE,
@@ -160,12 +160,38 @@ with st.spinner("Setting up agent...please wait"):
     )
     st.success("Agent setup done!")
 
+    system_prompt_content = """ 
+    If you get the question: 
+
+    Show me the number of loan accounts and total loan amount by cost center. 
+    Show me the top 20 cost centers with the highest loan amounts. 
+    Order the output by descending loan amount
+
+
+    Your sql query should be:
+
+
+    SELECT TOP 20
+        a.COST_CENTR_ID AS Cost_Center,
+        COUNT(DISTINCT l.ACCT_ID) AS Number_of_Loan_Accounts,
+        FORMAT(SUM(l.LN_ACCT_TOTAL_OWE), 'C', 'en-US') AS Total_Loan_Amount
+    FROM 
+        trg.ACCOUNT a
+    JOIN 
+        trg.LOAN l ON a.ACCT_ID = l.ACCT_ID
+    GROUP BY 
+        a.COST_CENTR_ID
+    ORDER BY 
+        SUM(l.LN_ACCT_TOTAL_OWE) DESC;
+    """
+
 if (
     "llm_sql_agent_messages" not in st.session_state
     or st.button("Clear message history")
     or not st.session_state.llm_sql_agent_messages
 ):
     st.session_state["llm_sql_agent_messages"] = [
+        {"role":"system", "content": system_content},
         {"role": "assistant", "content": "How can I help you?"}
     ]
 
