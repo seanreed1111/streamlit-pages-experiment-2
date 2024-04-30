@@ -75,7 +75,6 @@ if "config_dir_path" not in st.session_state:
     st.stop()
 
 # upload file
-# see also langchain.storage for storage https://api.python.langchain.com/en/latest/langchain_api_reference.html#module-langchain.storage
 with st.sidebar:
     st.markdown("### UPLOAD FILE")
     file_uploader_radio = st.radio("Choose one", ["no file needed", "upload file"])

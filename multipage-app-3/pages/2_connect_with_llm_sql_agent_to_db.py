@@ -156,7 +156,7 @@ with st.spinner("Setting up agent...please wait"):
         verbose=True,
         agent_type="openai-tools",
         max_iterations=15,
-        agent_executor_kwargs={"return_intermediate_steps": True},
+        # agent_executor_kwargs={"return_intermediate_steps": True},
     )
     st.success("Agent setup done!")
 
@@ -191,7 +191,6 @@ if (
     or not st.session_state.llm_sql_agent_messages
 ):
     st.session_state["llm_sql_agent_messages"] = [
-        {"role":"system", "content": system_content},
         {"role": "assistant", "content": "How can I help you?"}
     ]
 

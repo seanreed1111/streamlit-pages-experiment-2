@@ -95,7 +95,7 @@ with st.sidebar:
                     uid = dbconfig["username"]
                     pwd = dbconfig["password"]
                     port = int(dbconfig.get("port", 1433))
-                    pyodbc_connection_string = f"DRIVER={driver};SERVER={server};PORT={port};DATABASE={database};UID={uid};PWD={pwd};Encrypt=yes;Connection Timeout=30;READONLY=True;"
+                    pyodbc_connection_string = f"DRIVER={driver};SERVER={server};PORT={port};DATABASE={database};UID={uid};PWD={pwd};Encrypt=yes;Connection Timeout=60;READONLY=True;"
                     params = urllib.parse.quote_plus(pyodbc_connection_string)
                     sqlalchemy_connection_string = (
                         f"mssql+pyodbc:///?odbc_connect={params}"
